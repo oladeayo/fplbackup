@@ -39,6 +39,28 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         function populateTransferMarketInsights(data) {
             // Implementation will go here
         }
+
+        function populateSuspensionRisk(data) {
+            const suspensionRiskDiv = document.getElementById('suspensionRisk');
+            if (!data || !data.length) {
+                suspensionRiskDiv.innerHTML = '<p class="text-slate-600">No players at risk of suspension</p>';
+                return;
+            }
+
+            suspensionRiskDiv.innerHTML = data.map(player => `
+                <div class="player-card glass-effect rounded-xl p-4 shadow-md">
+                    <div class="player-image-overlay mb-3">
+                        <img src="${player.photoUrl}" alt="${player.name}" class="w-full h-32 object-cover rounded-lg">
+                    </div>
+                    <h3 class="font-semibold text-slate-800">${player.name}</h3>
+                    <p class="text-sm text-slate-600">${player.team}</p>
+                    <p class="text-sm text-yellow-500 mt-2">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        ${player.yellowCards} yellow cards
+                    </p>
+                </div>
+            `).join('');
+        }
     </script>
 
     <style>
