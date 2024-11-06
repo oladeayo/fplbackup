@@ -12,17 +12,20 @@
     <meta property="og:title" content="FPL Manager Stats & Insights | FPL Team Performance Analyzer">
     <meta property="og:description" content="Get detailed analysis and insights for your Fantasy Premier League team performance">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://your-domain.com">
+    <meta property="og:url" content="https://www.myfplstats.xyz">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>FPL Manager Stats & Insights | FPL Team Performance Analyzer</title>
     
     <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR-GA-ID"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'YOUR-GA-ID');
-    </script>
+    <!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-WVJS3TZ7');</script>
+<!-- End Google Tag Manager -->
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -33,27 +36,54 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
+        :root {
+            --fpl-purple: #37003c;
+            --fpl-green: #00ff87;
+            --fpl-pink: #ff2882;
+        }
+        
         body {
             font-family: 'Inter', sans-serif;
         }
+        
+        body.dark-mode {
+            background: linear-gradient(to bottom right, #1a1a1a, #2d1635, #1a1a2e);
+            color: #ffffff;
+        }
+        
+        .dark-mode .glass-effect {
+            background: rgba(55, 0, 60, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
         .sticky-column {
             position: sticky;
             left: 0;
             z-index: 10;
             background-color: white;
         }
+        
+        .dark-mode .sticky-column {
+            background-color: var(--fpl-purple);
+        }
+        
         .glass-effect {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
         }
+        
         .card-hover {
             transition: all 0.3s ease;
         }
+        
         .card-hover:hover {
             transform: translateY(-5px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
+        
         @media (max-width: 640px) {
             .responsive-table {
                 display: block;
@@ -61,47 +91,235 @@
                 -webkit-overflow-scrolling: touch;
             }
         }
+        
         .gradient-text {
-            background: linear-gradient(135deg, #3B82F6, #6366F1, #8B5CF6);
+            background: linear-gradient(135deg, var(--fpl-green), var(--fpl-purple), var(--fpl-pink));
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
             height: 6px;
         }
+        
         .custom-scrollbar::-webkit-scrollbar-track {
             background: #f1f5f9;
         }
+        
+        .dark-mode .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #94a3b8;
             border-radius: 3px;
         }
+        
+        .dark-mode .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: var(--fpl-pink);
+        }
+        
+        .horizontal-scroll {
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            padding: 20px 0;
+        }
+        
+        .player-card {
+            display: inline-block;
+            width: 200px;
+            margin-right: 20px;
+            vertical-align: top;
+        }
+        
+        .player-image-overlay {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+        
+        .player-image-overlay::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+        }
+        
+        .dark-mode .text-slate-600 {
+            color: #e2e8f0;
+        }
+        
+        .dark-mode .text-slate-800 {
+            color: #f8fafc;
+        }
+        
+        .dark-mode .bg-white\/50 {
+            background-color: rgba(55, 0, 60, 0.5);
+        }
+        
+        .dark-mode .hover\:bg-blue-50\/50:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen custom-scrollbar">
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WVJS3TZ7"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+    <!-- Theme Toggle -->
+    <div class="fixed top-4 right-4 z-50">
+        <button onclick="toggleTheme()" class="p-2 rounded-full bg-white dark:bg-gray-800 shadow-lg">
+            <i class="fas fa-moon dark:text-white hidden dark:block"></i>
+            <i class="fas fa-sun text-yellow-500 dark:hidden"></i>
+        </button>
+    </div>
 
     <!-- Main Container -->
     <div class="container mx-auto px-4 py-8 max-w-7xl">
         
         <!-- Header Section -->
         <div class="text-center mb-16">
-            <h1 class="text-5xl md:text-6xl font-extrabold gradient-text mb-6 leading-tight">Check Manager Stats</h1>
+            <h1 class="text-5xl md:text-6xl font-extrabold gradient-text mb-6 leading-tight">
+                <i class="fas fa-trophy text-4xl mb-4"></i><br>
+                Check Manager Stats
+            </h1>
             <p class="text-slate-600 text-xl md:text-2xl font-medium">Unlock insights into your FPL team performance</p>
         </div>
 
         <!-- Input Section -->
         <div class="max-w-xl mx-auto mb-16">
             <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-                <input type="text" 
+                <div id="error-message" class="hidden text-red-500 mb-4 text-center">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Please enter a valid FPL ID
+                </div>
+                <input type="number" 
                        id="managerId" 
                        placeholder="Enter Manager ID" 
-                       class="w-full px-6 py-4 text-lg border-2 rounded-2xl border-blue-100 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition duration-300 bg-white/50">
-                <button onclick="analyzeManager()" 
-                        class="mt-6 w-full bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+                       class="w-full px-6 py-4 text-lg border-2 rounded-2xl border-blue-100 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition duration-300 bg-white/50"
+                       onkeypress="handleKeyPress(event)">
+                <button onclick="validateAndAnalyze()" 
+                        class="mt-6 w-full bg-gradient-to-r from-[var(--fpl-purple)] via-[var(--fpl-pink)] to-[var(--fpl-purple)] hover:opacity-90 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
                     <i class="fas fa-search text-xl"></i> Analyze Stats
                 </button>
+            </div>
+        </div>
+
+        <!-- New Cards Section (Always Visible) -->
+        <div class="mb-16 space-y-8">
+            <!-- Transfer Market Insights -->
+            <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
+                <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                    <i class="fas fa-exchange-alt mr-2"></i>
+                    Transfer Market Insights
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Top Transfers In -->
+                    <div class="horizontal-scroll">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-arrow-circle-up text-green-500"></i>
+                            Most Transferred In
+                        </h3>
+                        <div id="transfersIn" class="flex space-x-4">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Top Transfers Out -->
+                    <div class="horizontal-scroll">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-arrow-circle-down text-red-500"></i>
+                            Most Transferred Out
+                        </h3>
+                        <div id="transfersOut" class="flex space-x-4">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suspension Risk -->
+            <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
+                <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+                    Players Close to Suspension
+                </h2>
+                <div class="horizontal-scroll">
+                    <div id="suspensionRisk" class="flex space-x-4">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Captain Options -->
+            <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
+                <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                    <i class="fas fa-star text-yellow-500 mr-2"></i>
+                    Captain Options
+                </h2>
+                <div class="horizontal-scroll">
+                    <div id="captainOptions" class="flex space-x-4">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transfer Suggestions -->
+            <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
+                <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                    <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                    Transfer Suggestions
+                </h2>
+                <div class="space-y-6">
+                    <!-- Goalkeepers -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">Goalkeepers</h3>
+                        <div class="horizontal-scroll">
+                            <div id="gkpSuggestions" class="flex space-x-4">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Defenders -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">Defenders</h3>
+                        <div class="horizontal-scroll">
+                            <div id="defSuggestions" class="flex space-x-4">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Midfielders -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">Midfielders</h3>
+                        <div class="horizontal-scroll">
+                            <div id="midSuggestions" class="flex space-x-4">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Forwards -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">Forwards</h3>
+                        <div class="horizontal-scroll">
+                            <div id="fwdSuggestions" class="flex space-x-4">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -161,12 +379,12 @@
             </div>
         </div>
 
-        <!-- Share Button -->
+        <!-- Buy Me a Coffee Button -->
         <div class="flex justify-center mt-16">
-            <button onclick="shareApp()" 
-                    class="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-10 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
-                <i class="fas fa-share-alt text-xl"></i> Share App
-            </button>
+            <a href="https://www.buymeacoffee.com/oladeeayo" target="_blank"
+               class="bg-[#ffdd00] hover:bg-[#ffcd00] text-[#000000] font-bold py-4 px-10 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+                <i class="fas fa-coffee text-xl"></i> Buy me a coffee
+            </a>
         </div>
 
         <!-- Footer Section -->
@@ -183,6 +401,38 @@
         let pointsChart = null;
         let rankChart = null;
         let last3GWsChart = null;
+
+        // Theme toggle functionality
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        }
+
+        // Set initial theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+
+        // Input validation
+        function validateAndAnalyze() {
+            const managerId = document.getElementById('managerId').value;
+            const errorMessage = document.getElementById('error-message');
+            
+            if (!managerId) {
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+            
+            errorMessage.classList.add('hidden');
+            analyzeManager();
+        }
+
+        // Handle enter key press
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                validateAndAnalyze();
+            }
+        }
 
         async function analyzeManager() {
             const managerId = document.getElementById('managerId').value;

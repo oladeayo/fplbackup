@@ -80,6 +80,34 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${currentGameweek}/picks/`);
     const managerPicks = managerPicksResponse.data.picks;
 
+    // Get transfer market insights
+    const transfersInData = playerData.elements
+      .sort((a, b) => b.transfers_in_event - a.transfers_in_event)
+      .slice(0, 5);
+      
+    const transfersOutData = playerData.elements
+      .sort((a, b) => b.transfers_out_event - a.transfers_out_event)
+      .slice(0, 5);
+
+    // Get suspension risk players
+    const suspensionRiskPlayers = playerData.elements
+      .filter(p => p.yellow_cards === 4 || p.yellow_cards === 9)
+      .sort((a, b) => b.yellow_cards - a.yellow_cards)
+      .slice(0, 5);
+
+    // Get captain options based on form and fixtures
+    const captainOptions = playerData.elements
+      .sort((a, b) => b.form - a.form)
+      .slice(0, 5);
+
+    // Get transfer suggestions by position
+    const transferSuggestions = {
+      GKP: playerData.elements.filter(p => p.element_type === 1).sort((a, b) => b.form - a.form).slice(0, 5),
+      DEF: playerData.elements.filter(p => p.element_type === 2).sort((a, b) => b.form - a.form).slice(0, 5),
+      MID: playerData.elements.filter(p => p.element_type === 3).sort((a, b) => b.form - a.form).slice(0, 5),
+      FWD: playerData.elements.filter(p => p.element_type === 4).sort((a, b) => b.form - a.form).slice(0, 5)
+    };
+
     for (const pick of managerPicks) {
       const player = playerData.elements.find(p => p.id === pick.element);
       if (!player) continue;
@@ -226,7 +254,12 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       })),
       weeklyPoints,
       weeklyRanks,
-      currentTeam
+      currentTeam,
+      transfersIn: transfersInData,
+      transfersOut: transfersOutData,
+      suspensionRisk: suspensionRiskPlayers,
+      captainOptions: captainOptions,
+      transferSuggestions
     };
 
     res.json(analysis);
