@@ -48,7 +48,12 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const managerEntryData = managerEntryResponse.data;
     const historyData = historyResponse.data;
 
-    const currentGameweek = playerData.events.find(event => event.is_current).id;
+    // Find current gameweek safely
+    const currentEvent = playerData.events.find(event => event.is_current);
+    if (!currentEvent) {
+      throw new Error('Could not determine current gameweek');
+    }
+    const currentGameweek = currentEvent.id;
     
     // Initialize analysis data structure
     const weeklyPoints = new Array(currentGameweek).fill(0);
@@ -66,9 +71,16 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       const fixturesResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
       const nextFixtures = fixturesResponse.data.fixtures.slice(0, 5).map(fixture => {
         const isHome = fixture.is_home;
-        const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h)).short_name;
+        const opponentTeam = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h));
+        if (!opponentTeam) {
+          return {
+            opponent: 'Unknown',
+            isHome,
+            difficulty: fixture.difficulty
+          };
+        }
         return {
-          opponent,
+          opponent: opponentTeam.short_name,
           isHome,
           difficulty: fixture.difficulty
         };
@@ -98,6 +110,8 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const positions = ['GKP', 'DEF', 'MID', 'FWD'];
     positions.forEach((pos, index) => {
       const positionPlayers = playerData.elements.filter(p => p.element_type === index + 1);
+      if (positionPlayers.length === 0) return;
+      
       const topScorer = positionPlayers.reduce((max, p) => p.total_points > max.total_points ? p : max);
       const totalPoints = positionPlayers.reduce((sum, p) => sum + p.total_points, 0);
       
@@ -112,22 +126,27 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       });
     });
 
-    // Prepare transfer suggestions
+    // Prepare transfer suggestions with null checks
     const transferSuggestions = {
-      gkp: playerData.elements.filter(p => p.element_type === 1).sort((a, b) => b.total_points - a.total_points).slice(0, 3),
-      def: playerData.elements.filter(p => p.element_type === 2).sort((a, b) => b.total_points - a.total_points).slice(0, 5),
-      mid: playerData.elements.filter(p => p.element_type === 3).sort((a, b) => b.total_points - a.total_points).slice(0, 6),
-      fwd: playerData.elements.filter(p => p.element_type === 4).sort((a, b) => b.total_points - a.total_points).slice(0, 4)
+      gkp: playerData.elements.filter(p => p?.element_type === 1).sort((a, b) => b.total_points - a.total_points).slice(0, 3),
+      def: playerData.elements.filter(p => p?.element_type === 2).sort((a, b) => b.total_points - a.total_points).slice(0, 5),
+      mid: playerData.elements.filter(p => p?.element_type === 3).sort((a, b) => b.total_points - a.total_points).slice(0, 6),
+      fwd: playerData.elements.filter(p => p?.element_type === 4).sort((a, b) => b.total_points - a.total_points).slice(0, 4)
     };
 
     // Format transfer suggestions with images and fixtures
     for (const pos in transferSuggestions) {
       transferSuggestions[pos] = await Promise.all(transferSuggestions[pos].map(async (player) => {
+        if (!player) return null;
+        
         const fixturesResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
-        const nextFixtures = fixturesResponse.data.fixtures.slice(0, 3).map(fixture => ({
-          opponent: playerData.teams.find(t => t.id === (fixture.is_home ? fixture.team_a : fixture.team_h)).short_name,
-          difficulty: fixture.difficulty
-        }));
+        const nextFixtures = fixturesResponse.data.fixtures.slice(0, 3).map(fixture => {
+          const opponentTeam = playerData.teams.find(t => t.id === (fixture.is_home ? fixture.team_a : fixture.team_h));
+          return {
+            opponent: opponentTeam?.short_name || 'Unknown',
+            difficulty: fixture.difficulty
+          };
+        });
 
         return {
           name: player.web_name,
@@ -135,7 +154,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
           image: `https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.code}.png`,
           nextFixtures
         };
-      }));
+      })).then(results => results.filter(Boolean)); // Remove any null results
     }
 
     const analysis = {
@@ -149,7 +168,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     res.json(analysis);
   } catch (error) {
     console.error('Error analyzing manager:', error);
-    res.status(500).json({ error: 'Failed to analyze manager' });
+    res.status(500).json({ error: 'Failed to analyze manager: ' + error.message });
   }
 });
 
