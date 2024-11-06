@@ -36,7 +36,7 @@ app.get('/api/bootstrap-static', async (req, res) => {
 app.get('/api/analyze-manager/:managerId', async (req, res) => {
   try {
     const { managerId } = req.params;
-    const leagueId = 314; // Your league ID
+    const leagueId = 314; // League ID for comparison with leader
     
     // Fetch all required data in parallel
     const [playerDataResponse, managerEntryResponse, historyResponse, leagueResponse] = await Promise.all([
@@ -51,7 +51,8 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const historyData = historyResponse.data;
     const leagueData = leagueResponse.data;
 
-    const currentGameweek = playerData.events.find(event => event.is_current).id;
+    const currentGameweek = playerData.events.find(event => event.is_current)?.id || 
+                          Math.max(...playerData.events.filter(e => e.finished).map(e => e.id));
     const topManagerPoints = leagueData.standings.results[0].total;
     
     // Initialize analysis data structure
@@ -83,29 +84,68 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     // Get transfer market insights
     const transfersInData = playerData.elements
       .sort((a, b) => b.transfers_in_event - a.transfers_in_event)
-      .slice(0, 5);
+      .slice(0, 5)
+      .map(p => ({
+        name: p.web_name,
+        team: playerData.teams.find(t => t.id === p.team).short_name,
+        transfers: p.transfers_in_event,
+        points: p.total_points,
+        form: parseFloat(p.form)
+      }));
       
     const transfersOutData = playerData.elements
       .sort((a, b) => b.transfers_out_event - a.transfers_out_event)
-      .slice(0, 5);
-
-    // Get suspension risk players
-    const suspensionRiskPlayers = playerData.elements
-      .filter(p => p.yellow_cards === 4 || p.yellow_cards === 9)
-      .sort((a, b) => b.yellow_cards - a.yellow_cards)
-      .slice(0, 5);
-
-    // Get captain options based on form and fixtures
-    const captainOptions = playerData.elements
-      .sort((a, b) => b.form - a.form)
-      .slice(0, 5);
+      .slice(0, 5)
+      .map(p => ({
+        name: p.web_name,
+        team: playerData.teams.find(t => t.id === p.team).short_name,
+        transfers: p.transfers_out_event,
+        points: p.total_points,
+        form: parseFloat(p.form)
+      }));
 
     // Get transfer suggestions by position
     const transferSuggestions = {
-      GKP: playerData.elements.filter(p => p.element_type === 1).sort((a, b) => b.form - a.form).slice(0, 5),
-      DEF: playerData.elements.filter(p => p.element_type === 2).sort((a, b) => b.form - a.form).slice(0, 5),
-      MID: playerData.elements.filter(p => p.element_type === 3).sort((a, b) => b.form - a.form).slice(0, 5),
-      FWD: playerData.elements.filter(p => p.element_type === 4).sort((a, b) => b.form - a.form).slice(0, 5)
+      GKP: playerData.elements.filter(p => p.element_type === 1)
+        .sort((a, b) => parseFloat(b.form) - parseFloat(a.form))
+        .slice(0, 5)
+        .map(p => ({
+          name: p.web_name,
+          team: playerData.teams.find(t => t.id === p.team).short_name,
+          points: p.total_points,
+          form: parseFloat(p.form),
+          price: p.now_cost / 10
+        })),
+      DEF: playerData.elements.filter(p => p.element_type === 2)
+        .sort((a, b) => parseFloat(b.form) - parseFloat(a.form))
+        .slice(0, 5)
+        .map(p => ({
+          name: p.web_name,
+          team: playerData.teams.find(t => t.id === p.team).short_name,
+          points: p.total_points,
+          form: parseFloat(p.form),
+          price: p.now_cost / 10
+        })),
+      MID: playerData.elements.filter(p => p.element_type === 3)
+        .sort((a, b) => parseFloat(b.form) - parseFloat(a.form))
+        .slice(0, 5)
+        .map(p => ({
+          name: p.web_name,
+          team: playerData.teams.find(t => t.id === p.team).short_name,
+          points: p.total_points,
+          form: parseFloat(p.form),
+          price: p.now_cost / 10
+        })),
+      FWD: playerData.elements.filter(p => p.element_type === 4)
+        .sort((a, b) => parseFloat(b.form) - parseFloat(a.form))
+        .slice(0, 5)
+        .map(p => ({
+          name: p.web_name,
+          team: playerData.teams.find(t => t.id === p.team).short_name,
+          points: p.total_points,
+          form: parseFloat(p.form),
+          price: p.now_cost / 10
+        }))
     };
 
     for (const pick of managerPicks) {
@@ -128,98 +168,112 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
 
       currentTeam.push({
         name: player.web_name,
+        team: playerData.teams.find(t => t.id === player.team).short_name,
+        position: ["GKP", "DEF", "MID", "FWD"][player.element_type - 1],
         nextFixtures,
-        last3GWPoints
+        last3GWPoints,
+        form: parseFloat(player.form),
+        totalPoints: player.total_points
       });
     }
 
+    // Process historical data for each gameweek
     for (let gw = 1; gw <= currentGameweek; gw++) {
-      const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${gw}/picks/`);
-      const managerPicksData = managerPicksResponse.data;
-      const managerPicks = managerPicksData.picks;
+      try {
+        const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${gw}/picks/`);
+        const managerPicksData = managerPicksResponse.data;
+        const gwPicks = managerPicksData.picks;
 
-      const isBenchBoost = managerPicksData.active_chip === "bboost";
-      const isTripleCaptain = managerPicksData.active_chip === "3xc";
+        const isBenchBoost = managerPicksData.active_chip === "bboost";
+        const isTripleCaptain = managerPicksData.active_chip === "3xc";
 
-      let gwPoints = 0;
-      
-      for (const pick of managerPicks) {
-        const playerId = pick.element;
-        const player = playerData.elements.find(p => p.id == playerId);
-        if (!player) continue;
+        let gwPoints = 0;
+        
+        for (const pick of gwPicks) {
+          const playerId = pick.element;
+          const player = playerData.elements.find(p => p.id === playerId);
+          if (!player) continue;
 
-        const playerHistoryResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
-        const playerHistory = playerHistoryResponse.data.history;
-        const gameweekHistory = playerHistory.find(history => history.round === gw);
-        const pointsThisWeek = gameweekHistory ? gameweekHistory.total_points : 0;
+          const playerHistoryResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
+          const playerHistory = playerHistoryResponse.data.history;
+          const gameweekHistory = playerHistory.find(history => history.round === gw);
+          const pointsThisWeek = gameweekHistory ? gameweekHistory.total_points : 0;
 
-        if (!playerStats[playerId]) {
-          playerStats[playerId] = {
-            name: player.web_name,
-            team: playerData.teams[player.team - 1].name,
-            position: ["GKP", "DEF", "MID", "FWD"][player.element_type - 1],
-            totalPointsActive: 0,
-            gwInSquad: 0,
-            starts: 0,
-            cappedPoints: 0,
-            playerPoints: 0
-          };
-        }
-
-        const inStarting11 = pick.position <= 11;
-        const isCaptain = pick.is_captain;
-
-        playerStats[playerId].playerPoints += pointsThisWeek;
-
-        if (inStarting11 || isBenchBoost) {
-          let activePoints = pointsThisWeek;
-          if (isCaptain) {
-            activePoints *= isTripleCaptain ? 3 : 2;
-            totalCaptaincyPoints += activePoints;
-            playerStats[playerId].cappedPoints += activePoints;
-          }
-
-          playerStats[playerId].totalPointsActive += activePoints;
-          totalPointsActive += activePoints;
-          gwPoints += activePoints;
-
-          const position = playerStats[playerId].position;
-          if (!positionPoints[position][playerId]) {
-            positionPoints[position][playerId] = {
-              name: playerStats[playerId].name,
-              points: 0
+          if (!playerStats[playerId]) {
+            playerStats[playerId] = {
+              name: player.web_name,
+              team: playerData.teams.find(t => t.id === player.team).short_name,
+              position: ["GKP", "DEF", "MID", "FWD"][player.element_type - 1],
+              totalPointsActive: 0,
+              gwInSquad: 0,
+              starts: 0,
+              cappedPoints: 0,
+              last3GWPoints: 0
             };
           }
-          positionPoints[position][playerId].points += activePoints;
 
-          if (inStarting11) playerStats[playerId].starts += 1;
-          playerStats[playerId].gwInSquad += 1;
-        } else {
-          totalPointsLostOnBench += pointsThisWeek;
+          const inStarting11 = pick.position <= 11;
+          const isCaptain = pick.is_captain;
+
+          if (inStarting11 || isBenchBoost) {
+            let activePoints = pointsThisWeek;
+            if (isCaptain) {
+              activePoints *= isTripleCaptain ? 3 : 2;
+              totalCaptaincyPoints += activePoints;
+              playerStats[playerId].cappedPoints += activePoints;
+            }
+
+            playerStats[playerId].totalPointsActive += activePoints;
+            totalPointsActive += activePoints;
+            gwPoints += activePoints;
+
+            const position = playerStats[playerId].position;
+            if (!positionPoints[position][playerId]) {
+              positionPoints[position][playerId] = {
+                name: playerStats[playerId].name,
+                points: 0
+              };
+            }
+            positionPoints[position][playerId].points += activePoints;
+
+            if (inStarting11) playerStats[playerId].starts += 1;
+            playerStats[playerId].gwInSquad += 1;
+          } else {
+            totalPointsLostOnBench += pointsThisWeek;
+          }
+
+          // Update last 3 GWs points if within last 3 gameweeks
+          if (currentGameweek - gw < 3) {
+            playerStats[playerId].last3GWPoints += pointsThisWeek;
+          }
         }
-      }
-      
-      // Update weekly stats
-      weeklyPoints[gw - 1] = gwPoints;
-      const gwRank = historyData.current.find(h => h.event === gw)?.overall_rank || 0;
-      weeklyRanks[gw - 1] = gwRank;
-      
-      // Update highest/lowest tracking
-      if (gwPoints > highestPoints) {
-        highestPoints = gwPoints;
-        highestPointsGW = gw;
-      }
-      if (gwPoints < lowestPoints) {
-        lowestPoints = gwPoints;
-        lowestPointsGW = gw;
-      }
-      if (gwRank < highestRank) {
-        highestRank = gwRank;
-        highestRankGW = gw;
-      }
-      if (gwRank > lowestRank) {
-        lowestRank = gwRank;
-        lowestRankGW = gw;
+        
+        // Update weekly stats
+        weeklyPoints[gw - 1] = gwPoints;
+        const gwHistory = historyData.current.find(h => h.event === gw);
+        if (gwHistory) {
+          weeklyRanks[gw - 1] = gwHistory.overall_rank;
+          
+          // Update highest/lowest tracking
+          if (gwPoints > highestPoints) {
+            highestPoints = gwPoints;
+            highestPointsGW = gw;
+          }
+          if (gwPoints < lowestPoints) {
+            lowestPoints = gwPoints;
+            lowestPointsGW = gw;
+          }
+          if (gwHistory.overall_rank < highestRank) {
+            highestRank = gwHistory.overall_rank;
+            highestRankGW = gw;
+          }
+          if (gwHistory.overall_rank > lowestRank) {
+            lowestRank = gwHistory.overall_rank;
+            lowestRankGW = gw;
+          }
+        }
+      } catch (error) {
+        console.error(`Error processing gameweek ${gw}:`, error);
       }
     }
 
@@ -231,8 +285,8 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
         overallRanking: managerEntryData.summary_overall_rank?.toLocaleString() || "N/A",
         managerPoints: managerEntryData.summary_overall_points,
         allChipsUsed: historyData.chips.map(chip => chip.name).join(", ") || "None",
-        lastSeasonRank: historyData.past.length > 0 ? historyData.past[historyData.past.length - 1].rank.toLocaleString() : "Didn't Play",
-        seasonBeforeLastRank: historyData.past.length > 1 ? historyData.past[historyData.past.length - 2].rank.toLocaleString() : "Didn't Play",
+        lastSeasonRank: historyData.past.length > 0 ? historyData.past[historyData.past.length - 1].rank.toLocaleString() : "N/A",
+        seasonBeforeLastRank: historyData.past.length > 1 ? historyData.past[historyData.past.length - 2].rank.toLocaleString() : "N/A",
         pointDifference: managerEntryData.summary_overall_points - topManagerPoints,
         totalPointsLostOnBench,
         totalCaptaincyPoints,
@@ -246,7 +300,13 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
         lowestRank: lowestRank.toLocaleString(),
         lowestRankGW
       },
-      playerStats: Object.values(playerStats).sort((a, b) => b.totalPointsActive - a.totalPointsActive),
+      playerStats: Object.values(playerStats)
+        .sort((a, b) => b.totalPointsActive - a.totalPointsActive)
+        .map(player => ({
+          ...player,
+          totalPointsActive: Math.round(player.totalPointsActive),
+          cappedPoints: Math.round(player.cappedPoints)
+        })),
       positionSummary: Object.entries(positionPoints).map(([position, players]) => ({
         position,
         totalPoints: Object.values(players).reduce((sum, player) => sum + player.points, 0),
@@ -257,15 +317,13 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       currentTeam,
       transfersIn: transfersInData,
       transfersOut: transfersOutData,
-      suspensionRisk: suspensionRiskPlayers,
-      captainOptions: captainOptions,
       transferSuggestions
     };
 
     res.json(analysis);
   } catch (error) {
     console.error('Error analyzing manager:', error);
-    res.status(500).json({ error: 'Failed to analyze manager' });
+    res.status(500).json({ error: 'Failed to analyze manager', details: error.message });
   }
 });
 
