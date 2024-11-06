@@ -1,155 +1,942 @@
+<script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fantasy Premier League Analysis</title>
-  <link rel="stylesheet" href="/css/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/luxon@2.3.1/build/global/luxon.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Analyze your Fantasy Premier League (FPL) team performance with detailed stats and insights. Track your progress, view fixtures, and optimize your team.">
+    <meta name="keywords" content="FPL, Fantasy Premier League, FPL Stats, FPL Analysis, Football Fantasy">
+    <meta name="author" content="Oladeeayo">
+    <meta property="og:title" content="FPL Manager Stats & Insights | FPL Team Performance Analyzer">
+    <meta property="og:description" content="Get detailed analysis and insights for your Fantasy Premier League team performance">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.myfplstats.xyz">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>FPL Manager Stats & Insights | FPL Team Performance Analyzer</title>
+    
+    <!-- Google Analytics -->
+    <!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-WVJS3TZ7');</script>
+<!-- End Google Tag Manager -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <link rel="icon" href="football.ico" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        function populateTransferMarketInsights(transfersIn, transfersOut) {
+    // Populate Transfers In
+    const transfersInDiv = document.getElementById('transfersIn');
+    if (!transfersIn || !transfersIn.length) {
+        transfersInDiv.innerHTML = '<p class="text-slate-600">No transfer data available</p>';
+        return;
+    }
+
+    transfersInDiv.innerHTML = transfersIn.map(player => `
+        <div class="player-card glass-effect rounded-xl p-4 shadow-md">
+            <div class="player-image-overlay mb-3">
+                <img src="${player.photoUrl}" alt="${player.name}" class="w-full h-32 object-cover rounded-lg">
+            </div>
+            <h3 class="font-semibold text-slate-800">${player.name}</h3>
+            <p class="text-sm text-slate-600">${player.team}</p>
+            <p class="text-sm text-green-500 mt-2">
+                <i class="fas fa-arrow-up mr-1"></i>
+                ${player.transfersIn.toLocaleString()} transfers in
+            </p>
+            <p class="text-sm text-blue-500">
+                <i class="fas fa-pound-sign mr-1"></i>
+                ${player.price}m
+            </p>
+        </div>
+    `).join('');
+
+    // Populate Transfers Out
+    const transfersOutDiv = document.getElementById('transfersOut');
+    if (!transfersOut || !transfersOut.length) {
+        transfersOutDiv.innerHTML = '<p class="text-slate-600">No transfer data available</p>';
+        return;
+    }
+
+    transfersOutDiv.innerHTML = transfersOut.map(player => `
+        <div class="player-card glass-effect rounded-xl p-4 shadow-md">
+            <div class="player-image-overlay mb-3">
+                <img src="${player.photoUrl}" alt="${player.name}" class="w-full h-32 object-cover rounded-lg">
+            </div>
+            <h3 class="font-semibold text-slate-800">${player.name}</h3>
+            <p class="text-sm text-slate-600">${player.team}</p>
+            <p class="text-sm text-red-500 mt-2">
+                <i class="fas fa-arrow-down mr-1"></i>
+                ${player.transfersOut.toLocaleString()} transfers out
+            </p>
+            <p class="text-sm text-blue-500">
+                <i class="fas fa-pound-sign mr-1"></i>
+                ${player.price}m
+            </p>
+        </div>
+    `).join('');
+}
+
+        function populateSuspensionRisk(data) {
+            const suspensionRiskDiv = document.getElementById('suspensionRisk');
+            if (!data || !data.length) {
+                suspensionRiskDiv.innerHTML = '<p class="text-slate-600">No players at risk of suspension</p>';
+                return;
+            }
+
+            suspensionRiskDiv.innerHTML = data.map(player => `
+                <div class="player-card glass-effect rounded-xl p-4 shadow-md">
+                    <div class="player-image-overlay mb-3">
+                        <img src="${player.photoUrl}" alt="${player.name}" class="w-full h-32 object-cover rounded-lg">
+                    </div>
+                    <h3 class="font-semibold text-slate-800">${player.name}</h3>
+                    <p class="text-sm text-slate-600">${player.team}</p>
+                    <p class="text-sm text-yellow-500 mt-2">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        ${player.yellowCards} yellow cards
+                    </p>
+                </div>
+            `).join('');
+
+            function populateCaptainOptions(data) {
+            const captainOptionsDiv = document.getElementById('captainOptions');
+            if (!data || !data.length) {
+                captainOptionsDiv.innerHTML = '<p class="text-slate-600">No captain suggestions available</p>';
+                return;
+            }
+
+            captainOptionsDiv.innerHTML = data.map(player => `
+                <div class="player-card glass-effect rounded-xl p-4 shadow-md">
+                    <div class="player-image-overlay mb-3">
+                        <img src="${player.photoUrl}" alt="${player.name}" class="w-full h-32 object-cover rounded-lg">
+                    </div>
+                    <h3 class="font-semibold text-slate-800">${player.name}</h3>
+                    <p class="text-sm text-slate-600">${player.team}</p>
+                    <p class="text-sm text-green-500 mt-2">
+                        <i class="fas fa-star mr-1"></i>
+                        Form: ${player.form}
+                    </p>
+                    <p class="text-sm text-blue-500">
+                        <i class="fas fa-calendar mr-1"></i>
+                        Next: ${player.nextFixture}
+                    </p>
+                </div>
+            `).join('');
+        }
+    </script>
+
+    <style>
+        :root {
+            --fpl-purple: #37003c;
+            --fpl-green: #00ff87;
+            --fpl-pink: #ff2882;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body.dark-mode {
+            background: linear-gradient(to bottom right, #1a1a1a, #2d1635, #1a1a2e);
+            color: #ffffff;
+        }
+        
+        .dark-mode .glass-effect {
+            background: rgba(55, 0, 60, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sticky-column {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background-color: white;
+        }
+        
+        .dark-mode .sticky-column {
+            background-color: var(--fpl-purple);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        @media (max-width: 640px) {
+            .responsive-table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--fpl-green), var(--fpl-purple), var(--fpl-pink));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: clamp(2rem, 5vw, 4rem);
+            text-align: center;
+            padding: 0 1rem;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .dark-mode .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 3px;
+        }
+        
+        .dark-mode .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: var(--fpl-pink);
+        }
+        
+        .horizontal-scroll {
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            padding: 20px 0;
+        }
+        
+        .player-card {
+            display: inline-block;
+            width: 200px;
+            margin-right: 20px;
+            vertical-align: top;
+        }
+        
+        .player-image-overlay {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+        
+        .player-image-overlay::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+        }
+        
+        .dark-mode .text-slate-600 {
+            color: #e2e8f0;
+        }
+        
+        .dark-mode .text-slate-800 {
+            color: #f8fafc;
+        }
+        
+        .dark-mode .bg-white\/50 {
+            background-color: rgba(55, 0, 60, 0.5);
+        }
+        
+        .dark-mode .hover\:bg-blue-50\/50:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .dark-mode table {
+            color: #f8fafc;
+        }
+
+        .dark-mode select {
+            background-color: #2d1635;
+            color: #f8fafc;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .dark-mode .sticky-column {
+            background-color: #2d1635;
+        }
+
+        .dark-mode tr:hover {
+            background-color: rgba(59, 130, 246, 0.1) !important;
+        }
+
+        .dark-mode th {
+            color: #f8fafc;
+            background-color: rgba(55, 0, 60, 0.8);
+        }
+
+        .dark-mode td {
+            color: #f8fafc;
+        }
+    </style>
 </head>
-<body>
-  <div class="fixed top-4 right-4 z-50">
-  </div>
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen custom-scrollbar">
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WVJS3TZ7"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 
-  <div class="container mx-auto px-4 py-8 max-w-7xl">
-    <div class="text-center mb-16">
-      <h1 id="check-manager-stats" class="gradient-text mb-6 leading-tight">Check Manager Stats</h1>
-      <p>Unlock insights into your FPL team performance</p>
-    </div>
-
-    <div class="max-w-xl mx-auto mb-16">
-      <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-        <div id="error-message" class="hidden text-red-500 mb-4 text-center">
-          Please enter a valid FPL ID
-        </div>
-
-        <button id="analyze-button" class="bg-[#ffdd00] hover:bg-[#ffcd00] text-[#000000] font-bold py-4 px-10 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
-          Analyze Stats
+    <!-- Theme Toggle -->
+    <div class="fixed top-4 right-4 z-50">
+        <button onclick="toggleTheme()" class="p-2 rounded-full bg-white dark:bg-gray-800 shadow-lg">
+            <i class="fas fa-moon dark:text-white hidden dark:block"></i>
+            <i class="fas fa-sun text-yellow-500 dark:hidden"></i>
         </button>
-      </div>
     </div>
 
-    <div id="results" class="max-w-7xl mx-auto space-y-10"></div>
-
-    <div id="positionSummary" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 hidden card-hover">
-      <h2 id="position-summary" class="text-2xl font-bold text-slate-800 mb-8">Position Summary</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-      </div>
-    </div>
-
-    <div id="charts" class="max-w-7xl mx-auto mt-10 space-y-10 hidden">
-      <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-        <h2 id="points-per-gameweek" class="text-2xl font-bold text-slate-800 mb-8">Points Per Gameweek</h2>
-        <div class="relative h-[400px]">
-          <canvas id="pointsChart"></canvas>
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        
+        <!-- Header Section -->
+        <div class="text-center mb-16">
+            <h1 class="gradient-text mb-6 leading-tight">
+                <i class="fas fa-trophy text-4xl mb-4"></i><br>
+                Check Manager Stats
+            </h1>
+            <p class="text-slate-600 text-xl md:text-2xl font-medium">
+                <i class="fas fa-chart-line mr-2"></i>
+                Unlock insights into your FPL team performance
+            </p>
         </div>
-      </div>
 
-      <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-        <h2 id="rank-per-gameweek" class="text-2xl font-bold text-slate-800 mb-8">Rank Per Gameweek</h2>
-        <div class="relative h-[400px]">
-          <canvas id="rankChart"></canvas>
+        <!-- Input Section -->
+        <div class="max-w-xl mx-auto mb-16">
+            <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
+                <div id="error-message" class="hidden text-red-500 mb-4 text-center">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Please enter a valid FPL ID
+                </div>
+                <input type="number" 
+                       id="managerId" 
+                       placeholder="Enter Manager ID" 
+                       class="w-full px-6 py-4 text-lg border-2 rounded-2xl border-blue-100 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition duration-300 bg-white/50"
+                       onkeypress="handleKeyPress(event)">
+                <button onclick="validateAndAnalyze()" 
+                        class="mt-6 w-full bg-gradient-to-r from-[var(--fpl-purple)] via-[var(--fpl-pink)] to-[var(--fpl-purple)] hover:opacity-90 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+                    <i class="fas fa-search text-xl"></i> Analyze Stats
+                </button>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <div id="currentTeamFixtures" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-      <h2 id="upcoming-fixtures" class="text-2xl font-bold text-slate-800 mb-8">Upcoming Fixtures</h2>
-      <div class="overflow-x-auto responsive-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Next 5 Fixtures</th>
-            </tr>
-          </thead>
-          <tbody>
-          </tbody>
-        </table>
-      </div>
-    </div>
+        <!-- Results Section -->
+        <div id="results" class="max-w-7xl mx-auto space-y-10"></div>
 
-    <div id="last3GWs" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-      <h2 id="last-3-gameweeks-performance" class="text-2xl font-bold text-slate-800 mb-8">Last 3 Gameweeks Performance</h2>
-      <div class="relative h-[400px]">
-        <canvas id="last3GWsChart"></canvas>
-      </div>
-    </div>
-
-    <div class="mb-16 space-y-8 mt-10">
-      <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-        <h2 id="transfer-market-insights" class="text-2xl font-bold text-slate-800 mb-8">Transfer Market Insights</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div class="horizontal-scroll">
-            <h3 id="most-transferred-in" class="text-xl font-semibold mb-4">Most Transferred In</h3>
-            <div id="transfersIn" class="flex space-x-4">
+        <!-- Position Summary Card -->
+        <div id="positionSummary" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 hidden card-hover">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                <i class="fas fa-users mr-2"></i>
+                Position Summary
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+                <!-- Populated by JavaScript -->
             </div>
-          </div>
-          <div class="horizontal-scroll">
-            <h3 id="most-transferred-out" class="text-xl font-semibold mb-4">Most Transferred Out</h3>
-            <div id="transfersOut" class="flex space-x-4">
-            </div>
-          </div>
         </div>
-      </div>
 
-      <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-        <h2 id="players-close-to-suspension" class="text-2xl font-bold text-slate-800 mb-8">Players Close to Suspension</h2>
-        <div class="horizontal-scroll">
-          <div id="suspensionRisk" class="flex space-x-4">
-          </div>
-        </div>
-      </div>
+        <!-- Charts Section -->
+        <div id="charts" class="max-w-7xl mx-auto mt-10 space-y-10 hidden">
+            <!-- Points Chart -->
+            <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
+                <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                    <i class="fas fa-chart-line mr-2"></i>
+                    Points Per Gameweek
+                </h2>
+                <div class="relative h-[400px]">
+                    <canvas id="pointsChart"></canvas>
+                </div>
+            </div>
 
-      <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-        <h2 id="captain-options" class="text-2xl font-bold text-slate-800 mb-8">Captain Options</h2>
-        <div class="horizontal-scroll">
-          <div id="captainOptions" class="flex space-x-4">
-          </div>
+            <!-- Rank Chart -->
+            <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
+                <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                    <i class="fas fa-ranking-star mr-2"></i>
+                    Rank Per Gameweek
+                </h2>
+                <div class="relative h-[400px]">
+                    <canvas id="rankChart"></canvas>
+                </div>
+            </div>
         </div>
-      </div>
 
-      <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-        <h2 id="transfer-suggestions" class="text-2xl font-bold text-slate-800 mb-8">Transfer Suggestions</h2>
-        <div class="space-y-6">
-          <div>
-            <h3 id="goalkeepers" class="text-xl font-semibold mb-4">Goalkeepers</h3>
-            <div id="gkpSuggestions" class="horizontal-scroll flex space-x-4">
+        <!-- Current Team & Fixtures Card -->
+        <div id="currentTeamFixtures" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                <i class="fas fa-calendar-alt mr-2"></i>
+                Upcoming Fixtures
+            </h2>
+            <div class="overflow-x-auto responsive-table">
+                <table class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th class="sticky-column px-6 py-3 text-left text-sm font-semibold text-slate-600">Player</th>
+                            <th class="px-6 py-3 text-center text-sm font-semibold text-slate-600" colspan="5">Next 5 Fixtures</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fixturesBody">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
             </div>
-          </div>
-          <div>
-            <h3 id="defenders" class="text-xl font-semibold mb-4">Defenders</h3>
-            <div id="defSuggestions" class="horizontal-scroll flex space-x-4">
-            </div>
-          </div>
-          <div>
-            <h3 id="midfielders" class="text-xl font-semibold mb-4">Midfielders</h3>
-            <div id="midSuggestions" class="horizontal-scroll flex space-x-4">
-            </div>
-          </div>
-          <div>
-            <h3 id="forwards" class="text-xl font-semibold mb-4">Forwards</h3>
-            <div id="fwdSuggestions" class="horizontal-scroll flex space-x-4">
-            </div>
-          </div>
         </div>
-      </div>
+
+        <!-- Last 3 GWs Performance -->
+        <div id="last3GWs" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                <i class="fas fa-history mr-2"></i>
+                Last 3 Gameweeks Performance
+            </h2>
+            <div class="relative h-[400px]">
+                <canvas id="last3GWsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- New Cards Section (Always Visible) -->
+        <div class="mb-16 space-y-8 mt-10">
+            <!-- Transfer Market Insights -->
+            <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
+                <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                    <i class="fas fa-exchange-alt mr-2"></i>
+                    Transfer Market Insights
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Top Transfers In -->
+                    <div class="horizontal-scroll">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-arrow-circle-up text-green-500"></i>
+                            Most Transferred In
+                        </h3>
+                        <div id="transfersIn" class="flex space-x-4">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Top Transfers Out -->
+                    <div class="horizontal-scroll">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-arrow-circle-down text-red-500"></i>
+                            Most Transferred Out
+                        </h3>
+                        <div id="transfersOut" class="flex space-x-4">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suspension Risk -->
+            <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
+                <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+                    Players Close to Suspension
+                </h2>
+                <div class="horizontal-scroll">
+                    <div id="suspensionRisk" class="flex space-x-4">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Captain Options -->
+            <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
+                <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                    <i class="fas fa-star text-yellow-500 mr-2"></i>
+                    Captain Options
+                </h2>
+                <div class="horizontal-scroll">
+                    <div id="captainOptions" class="flex space-x-4">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transfer Suggestions -->
+            <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
+                <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                    <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                    Transfer Suggestions
+                </h2>
+                <div class="space-y-6">
+                    <!-- Goalkeepers -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-hands text-amber-500 mr-2"></i>
+                            Goalkeepers
+                        </h3>
+                        <div class="horizontal-scroll">
+                            <div id="gkpSuggestions" class="flex space-x-4">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Defenders -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-shield-alt text-blue-500 mr-2"></i>
+                            Defenders
+                        </h3>
+                        <div class="horizontal-scroll">
+                            <div id="defSuggestions" class="flex space-x-4">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Midfielders -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-running text-emerald-500 mr-2"></i>
+                            Midfielders
+                        </h3>
+                        <div class="horizontal-scroll">
+                            <div id="midSuggestions" class="flex space-x-4">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Forwards -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-futbol text-rose-500 mr-2"></i>
+                            Forwards
+                        </h3>
+                        <div class="horizontal-scroll">
+                            <div id="fwdSuggestions" class="flex space-x-4">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buy Me a Coffee Button -->
+        <div class="flex justify-center mt-16">
+            <a href="https://www.buymeacoffee.com/oladeeayo" target="_blank"
+               class="bg-[#ffdd00] hover:bg-[#ffcd00] text-[#000000] font-bold py-4 px-10 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+                <i class="fas fa-coffee text-xl"></i> Buy me a coffee
+            </a>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="text-center mt-20 mb-8">
+            <p class="text-slate-600">Created with ❤️ by 
+                <a href="https://twitter.com/Oladeeayo" target="_blank" class="text-blue-500 font-medium hover:text-blue-600 transition duration-300">
+                    <i class="fab fa-twitter mr-1"></i>Oladeeayo
+                </a>
+            </p>
+        </div>
     </div>
 
-    <div class="flex justify-center mt-16">
-      <a href="https://www.buymeacoffee.com/oladeeayo" class="bg-[#ffdd00] hover:bg-[#ffcd00] text-[#000000] font-bold py-4 px-10 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl" target="_blank">
-        Buy me a coffee
-      </a>
-    </div>
+    <script>
+        let pointsChart = null;
+        let rankChart = null;
+        let last3GWsChart = null;
 
-    <div class="text-center mt-20 mb-8">
-      Created with ❤️ by
-      <a href="https://twitter.com/Oladeeayo" class="text-blue-500 font-medium hover:text-blue-600 transition duration-300" target="_blank">Oladeeayo</a>
-    </div>
-  </div>
+        // Theme toggle functionality
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        }
 
-  <script src="/js/script.js"></script>
+        // Set initial theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+
+        // Input validation
+        function validateAndAnalyze() {
+            const managerId = document.getElementById('managerId').value;
+            const errorMessage = document.getElementById('error-message');
+            
+            if (!managerId) {
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+            
+            errorMessage.classList.add('hidden');
+            analyzeManager();
+        }
+
+        // Handle enter key press
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                validateAndAnalyze();
+            }
+        }
+
+        async function analyzeManager() {
+            const managerId = document.getElementById('managerId').value;
+            const resultsDiv = document.getElementById('results');
+            const chartsDiv = document.getElementById('charts');
+            const currentTeamFixtures = document.getElementById('currentTeamFixtures');
+            const positionSummaryDiv = document.getElementById('positionSummary');
+            const last3GWsDiv = document.getElementById('last3GWs');
+
+            // Display loading spinner
+            resultsDiv.innerHTML = `
+                <div class="flex justify-center items-center py-12">
+                    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+                </div>
+            `;
+            chartsDiv.classList.add('hidden');
+            currentTeamFixtures.classList.add('hidden');
+            positionSummaryDiv.classList.add('hidden');
+            last3GWsDiv.classList.add('hidden');
+
+            try {
+                const response = await fetch(`/api/analyze-manager/${managerId}`);
+                if (!response.ok) throw new Error("Manager data could not be retrieved");
+
+                const data = await response.json();
+                populateResults(data);
+                createCharts(data.weeklyPoints, data.weeklyRanks);
+                populateFixtures(data.currentTeam);
+                populatePositionSummary(data.positionSummary);
+                createLast3GWsChart(data.currentTeam);
+
+                // Populate transfer market insights
+                populateTransferMarketInsights(data.transfersIn, data.transfersOut);
+                populateSuspensionRisk(data.suspensionRisk);
+                populateCaptainOptions(data.captainOptions);
+                populateTransferSuggestions(data.transferSuggestions);
+
+                chartsDiv.classList.remove('hidden');
+                currentTeamFixtures.classList.remove('hidden');
+                positionSummaryDiv.classList.remove('hidden');
+                last3GWsDiv.classList.remove('hidden');
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-xl">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3"></i>
+                            <p class="text-red-700 font-medium">${error.message}</p>
+                        </div>
+                    </div>
+                `;
+                chartsDiv.classList.add('hidden');
+                currentTeamFixtures.classList.add('hidden');
+                positionSummaryDiv.classList.add('hidden');
+                last3GWsDiv.classList.add('hidden');
+            }
+        }
+
+        function populateResults(data) {
+            const resultsDiv = document.getElementById('results');
+            let html = `
+                <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                        <i class="fas fa-user-circle mr-2"></i>
+                        Manager's Summary
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-4">
+                            <p class="text-slate-600"><i class="fas fa-user mr-2"></i><span class="font-semibold">Name:</span> ${data.managerInfo.name}</p>
+                            <p class="text-slate-600"><i class="fas fa-shield-alt mr-2"></i><span class="font-semibold">Team Name:</span> ${data.managerInfo.teamName}</p>
+                            <p class="text-slate-600"><i class="fas fa-gamepad mr-2"></i><span class="font-semibold">Current Gameweek:</span> GW ${data.managerInfo.currentGameweek}</p>
+                            <p class="text-slate-600"><i class="fas fa-star mr-2"></i><span class="font-semibold">Total Points:</span> ${data.managerInfo.managerPoints} Points</p>
+                            <p class="text-slate-600"><i class="fas fa-calculator mr-2"></i><span class="font-semibold">Average Points Per GW:</span> ${(data.managerInfo.managerPoints / data.managerInfo.currentGameweek).toFixed(1)} Points</p>
+                            <p class="text-slate-600"><i class="fas fa-crown mr-2"></i><span class="font-semibold">Total Captain Points:</span> ${data.managerInfo.totalCaptaincyPoints}</p>
+                            <p class="text-slate-600"><i class="fas fa-chair mr-2"></i><span class="font-semibold">Total Points Lost on Bench:</span> ${data.managerInfo.totalPointsLostOnBench}</p>
+                            <p class="text-slate-600"><i class="fas fa-microchip mr-2"></i><span class="font-semibold">Chips Used:</span> ${data.managerInfo.allChipsUsed}</p>
+                        </div>
+                        <div class="space-y-4">
+                            <p class="text-slate-600"><i class="fas fa-globe mr-2"></i><span class="font-semibold">Overall Rank:</span> ${data.managerInfo.overallRanking}</p>
+                            <p class="text-slate-600"><i class="fas fa-chart-line mr-2"></i><span class="font-semibold">Point Difference to World No 1:</span> ${data.managerInfo.pointDifference} Points</p>
+                            <p class="text-slate-600"><i class="fas fa-arrow-down mr-2"></i><span class="font-semibold">Lowest Scoring GW:</span> ${data.managerInfo.lowestPoints} Points (GW${data.managerInfo.lowestPointsGW})</p>
+                            <p class="text-slate-600"><i class="fas fa-arrow-up mr-2"></i><span class="font-semibold">Highest Scoring GW:</span> ${data.managerInfo.highestPoints} Points (GW ${data.managerInfo.highestPointsGW})</p>
+                            <p class="text-slate-600"><i class="fas fa-trophy mr-2"></i><span class="font-semibold">Highest Rank:</span> ${data.managerInfo.highestRank} (GW${data.managerInfo.highestRankGW})</p>
+                            <p class="text-slate-600"><i class="fas fa-chart-bar mr-2"></i><span class="font-semibold">Lowest Rank:</span> ${data.managerInfo.lowestRank} (GW${data.managerInfo.lowestRankGW})</p>
+                            <p class="text-slate-600"><i class="fas fa-history mr-2"></i><span class="font-semibold">2023/2024 Rank:</span> ${data.managerInfo.lastSeasonRank}</p>
+                            <p class="text-slate-600"><i class="fas fa-history mr-2"></i><span class="font-semibold">2022/2023 Rank:</span> ${data.managerInfo.seasonBeforeLastRank}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
+                    <div class="flex flex-col md:flex-row items-center justify-between mb-8">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-4 md:mb-0">
+                            <i class="fas fa-users mr-2"></i>
+                            Squad Performance
+                        </h2>
+                        <div class="flex items-center gap-4">
+                            <span class="text-slate-600">Filter by position:</span>
+                            <select id="positionFilter" class="px-4 py-2 bg-white/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                <option value="All">All</option>
+                                <option value="GKP">GKP</option>
+                                <option value="DEF">DEF</option>
+                                <option value="MID">MID</option>
+                                <option value="FWD">FWD</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto responsive-table">
+                        <table class="min-w-full bg-white/50 rounded-xl">
+                            <thead class="bg-slate-50/50">
+                                <tr>
+                                    <th class="sticky-column px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider bg-slate-50/50">Player Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Team</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Position</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Points</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Games</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Starts</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Captain Points</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                ${data.playerStats.map((player, index) => `
+                                    <tr class="${index % 2 === 0 ? 'bg-white/50' : 'bg-slate-50/50'} hover:bg-blue-50/50 transition-colors duration-200">
+                                        <td class="sticky-column px-6 py-4 text-sm font-medium text-slate-900 bg-white/50">${player.name}</td>
+                                        <td class="px-6 py-4 text-sm text-slate-600">${player.team}</td>
+                                        <td class="px-6 py-4 text-sm text-slate-600">${player.position}</td>
+                                        <td class="px-6 py-4 text-sm text-slate-600">${player.totalPointsActive}</td>
+                                        <td class="px-6 py-4 text-sm text-slate-600">${player.gwInSquad}</td>
+                                        <td class="px-6 py-4 text-sm text-slate-600">${player.starts}</td>
+                                        <td class="px-6 py-4 text-sm text-slate-600">${player.cappedPoints}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            resultsDiv.innerHTML = html;
+
+            // Add event listener to position filter
+            const positionFilter = document.getElementById('positionFilter');
+            positionFilter.addEventListener('change', filterPlayerStats);
+        }
+
+        function filterPlayerStats() {
+            const positionFilter = document.getElementById('positionFilter').value;
+            const playerRows = document.querySelectorAll('#results table tbody tr');
+
+            playerRows.forEach(row => {
+                const position = row.children[2].textContent;
+                if (positionFilter === 'All' || position === positionFilter) {
+                    row.style.display = 'table-row';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function getFDRColor(difficulty) {
+            const colors = {
+                1: '#22c55e',  // Green
+                2: '#84cc16',  // Light Green
+                3: '#cbd5e1',  // Gray
+                4: '#f97316',  // Orange
+                5: '#ef4444'   // Red
+            };
+            return `background-color: ${colors[difficulty] || '#cbd5e1'}`;
+        }
+
+        function populateFixtures(teamData) {
+            const fixturesBody = document.getElementById('fixturesBody');
+            fixturesBody.innerHTML = teamData.map(player => `
+                <tr class="border-t hover:bg-blue-50/50 transition-colors duration-200">
+                    <td class="sticky-column px-6 py-4 text-sm font-medium text-slate-900 bg-white/50">${player.name}</td>
+                    ${player.nextFixtures.map(fixture => `
+                        <td class="px-4 py-4">
+                            <div style="${getFDRColor(fixture.difficulty)}" class="text-sm rounded-lg p-2 text-center text-white font-medium shadow-sm">
+                                ${fixture.opponent} (${fixture.isHome ? 'H' : 'A'})
+                            </div>
+                        </td>
+                    `).join('')}
+                </tr>
+            `).join('');
+        }
+
+        function populatePositionSummary(positionData) {
+            const summaryDiv = document.getElementById('positionSummary');
+            const positionColors = {
+                GKP: 'from-amber-400 to-amber-500',
+                DEF: 'from-blue-400 to-blue-500',
+                MID: 'from-emerald-400 to-emerald-500',
+                FWD: 'from-rose-400 to-rose-500'
+            };
+
+            const gridContent = positionData.map(pos => `
+                <div class="bg-gradient-to-br ${positionColors[pos.position]} rounded-2xl p-6 text-white transform hover:scale-105 transition duration-300 shadow-lg">
+                    <h3 class="text-xl font-bold mb-2">${pos.position}</h3>
+                    <p class="text-3xl font-bold">${pos.totalPoints}</p>
+                    <p class="text-sm opacity-90">Total Points</p>
+                </div>
+            `).join('');
+
+            summaryDiv.querySelector('.grid').innerHTML = gridContent;
+            summaryDiv.classList.remove('hidden');
+        }
+
+        function createCharts(weeklyPoints, weeklyRanks) {
+            createPointsChart(weeklyPoints);
+            createRankChart(weeklyRanks);
+        }
+
+        function createPointsChart(weeklyPoints) {
+            const ctx = document.getElementById('pointsChart').getContext('2d');
+            if (pointsChart) pointsChart.destroy();
+            
+            pointsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: weeklyPoints.map((_, i) => `GW${i + 1}`),
+                    datasets: [{
+                        label: 'Points',
+                        data: weeklyPoints,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createRankChart(weeklyRanks) {
+            const ctx = document.getElementById('rankChart').getContext('2d');
+            if (rankChart) rankChart.destroy();
+            
+            rankChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: weeklyRanks.map((_, i) => `GW${i + 1}`),
+                    datasets: [{
+                        label: 'Rank',
+                        data: weeklyRanks,
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            reverse: true,
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createLast3GWsChart(teamData) {
+            const ctx = document.getElementById('last3GWsChart').getContext('2d');
+            if (last3GWsChart) last3GWsChart.destroy();
+
+            // Sort players by last 3 GWs total points
+            const playerPoints = teamData.map(player => ({
+                name: player.name,
+                points: player.last3GWPoints || 0
+            })).sort((a, b) => b.points - a.points);
+
+            last3GWsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: playerPoints.map(p => p.name),
+                    datasets: [{
+                        label: 'Points',
+                        data: playerPoints.map(p => p.points),
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            display: true,
+                            color: '#374151',
+                            anchor: 'end',
+                            align: 'right',
+                            font: { weight: 'bold' }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        y: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+  
+        function shareApp() {
+            const url = window.location.href;
+            navigator.share ? 
+                navigator.share({ 
+                    url, 
+                    text: "Check out this FPL Manager stats app!", 
+                    title: "FPL Manager Stats" 
+                }) : 
+                alert("Sharing not supported on this device.");
+        }
+    </script>
 </body>
 </html>
