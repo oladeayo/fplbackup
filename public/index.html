@@ -228,12 +228,28 @@
                 if (!response.ok) throw new Error("Manager data could not be retrieved");
 
                 const data = await response.json();
-                populateResults(data);
-                createCharts(data.weeklyPoints, data.weeklyRanks);
-                populateFixtures(data.currentTeam);
-                populatePositionSummary(data.positionSummary);
-                createLast3GWsChart(data.currentTeam);
-                populateTransferSuggestions(data.transferSuggestions);
+                
+                // Check if data exists and has required properties before populating
+                if (data && data.managerInfo) {
+                    populateResults(data);
+                }
+                
+                if (data && data.weeklyPoints && data.weeklyRanks) {
+                    createCharts(data.weeklyPoints, data.weeklyRanks);
+                }
+                
+                if (data && data.currentTeam) {
+                    populateFixtures(data.currentTeam);
+                    createLast3GWsChart(data.currentTeam);
+                }
+                
+                if (data && data.positionSummary) {
+                    populatePositionSummary(data.positionSummary);
+                }
+                
+                if (data && data.transferSuggestions) {
+                    populateTransferSuggestions(data.transferSuggestions);
+                }
 
                 chartsDiv.classList.remove('hidden');
                 currentTeamFixtures.classList.remove('hidden');
@@ -258,6 +274,8 @@
         }
 
         function populateResults(data) {
+            if (!data.managerInfo || !data.playerStats) return;
+            
             const resultsDiv = document.getElementById('results');
             let html = `
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -268,26 +286,26 @@
                                 <i class="fas fa-user text-2xl text-white"></i>
                             </div>
                             <div>
-                                <h3 class="text-2xl font-bold text-gray-800">${data.managerInfo.name}</h3>
-                                <p class="text-gray-600">${data.managerInfo.teamName}</p>
+                                <h3 class="text-2xl font-bold text-gray-800">${data.managerInfo.name || 'N/A'}</h3>
+                                <p class="text-gray-600">${data.managerInfo.teamName || 'N/A'}</p>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-gray-50 rounded-xl p-4">
                                 <p class="text-gray-500 text-sm">Overall Rank</p>
-                                <p class="text-2xl font-bold text-gray-800">${data.managerInfo.overallRanking}</p>
+                                <p class="text-2xl font-bold text-gray-800">${data.managerInfo.overallRanking || 'N/A'}</p>
                             </div>
                             <div class="bg-gray-50 rounded-xl p-4">
                                 <p class="text-gray-500 text-sm">Total Points</p>
-                                <p class="text-2xl font-bold text-gray-800">${data.managerInfo.managerPoints}</p>
+                                <p class="text-2xl font-bold text-gray-800">${data.managerInfo.managerPoints || 'N/A'}</p>
                             </div>
                             <div class="bg-gray-50 rounded-xl p-4">
                                 <p class="text-gray-500 text-sm">Points Behind #1</p>
-                                <p class="text-2xl font-bold text-gray-800">${data.managerInfo.pointsBehindFirst}</p>
+                                <p class="text-2xl font-bold text-gray-800">${data.managerInfo.pointsBehindFirst || 'N/A'}</p>
                             </div>
                             <div class="bg-gray-50 rounded-xl p-4">
                                 <p class="text-gray-500 text-sm">Rank Summary</p>
-                                <p class="text-2xl font-bold text-gray-800">${data.managerInfo.rankSummary}</p>
+                                <p class="text-2xl font-bold text-gray-800">${data.managerInfo.rankSummary || 'N/A'}</p>
                             </div>
                         </div>
                     </div>
@@ -298,15 +316,15 @@
                         <div class="space-y-4">
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Highest Points</span>
-                                <span class="font-bold text-gray-800">${data.managerInfo.highestPoints} (GW${data.managerInfo.highestPointsGW})</span>
+                                <span class="font-bold text-gray-800">${data.managerInfo.highestPoints || 'N/A'} ${data.managerInfo.highestPointsGW ? `(GW${data.managerInfo.highestPointsGW})` : ''}</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Lowest Points</span>
-                                <span class="font-bold text-gray-800">${data.managerInfo.lowestPoints} (GW${data.managerInfo.lowestPointsGW})</span>
+                                <span class="font-bold text-gray-800">${data.managerInfo.lowestPoints || 'N/A'} ${data.managerInfo.lowestPointsGW ? `(GW${data.managerInfo.lowestPointsGW})` : ''}</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Average Points</span>
-                                <span class="font-bold text-gray-800">${(data.managerInfo.managerPoints / data.managerInfo.currentGameweek).toFixed(1)}</span>
+                                <span class="font-bold text-gray-800">${data.managerInfo.managerPoints && data.managerInfo.currentGameweek ? (data.managerInfo.managerPoints / data.managerInfo.currentGameweek).toFixed(1) : 'N/A'}</span>
                             </div>
                         </div>
                     </div>
@@ -317,15 +335,15 @@
                         <div class="space-y-4">
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Captain Points</span>
-                                <span class="font-bold text-gray-800">${data.managerInfo.totalCaptaincyPoints}</span>
+                                <span class="font-bold text-gray-800">${data.managerInfo.totalCaptaincyPoints || 'N/A'}</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Bench Points</span>
-                                <span class="font-bold text-gray-800">${data.managerInfo.totalPointsLostOnBench}</span>
+                                <span class="font-bold text-gray-800">${data.managerInfo.totalPointsLostOnBench || 'N/A'}</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Chips Used</span>
-                                <span class="font-bold text-gray-800">${data.managerInfo.allChipsUsed}</span>
+                                <span class="font-bold text-gray-800">${data.managerInfo.allChipsUsed || 'N/A'}</span>
                             </div>
                         </div>
                     </div>
@@ -361,13 +379,13 @@
                             <tbody class="divide-y divide-gray-200">
                                 ${data.playerStats.map((player, index) => `
                                     <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-100 transition-colors duration-200">
-                                        <td class="sticky-column px-6 py-4 text-sm font-medium text-gray-900 bg-white">${player.name}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">${player.team}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">${player.position}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">${player.totalPointsActive}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">${player.gwInSquad}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">${player.starts}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">${player.cappedPoints}</td>
+                                        <td class="sticky-column px-6 py-4 text-sm font-medium text-gray-900 bg-white">${player.name || 'N/A'}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">${player.team || 'N/A'}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">${player.position || 'N/A'}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">${player.totalPointsActive || 'N/A'}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">${player.gwInSquad || 'N/A'}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">${player.starts || 'N/A'}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">${player.cappedPoints || 'N/A'}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -409,14 +427,16 @@
         }
 
         function populateFixtures(teamData) {
+            if (!teamData || !Array.isArray(teamData)) return;
+            
             const fixturesBody = document.getElementById('fixturesBody');
             fixturesBody.innerHTML = teamData.map(player => `
                 <tr class="border-t hover:bg-gray-50 transition-colors duration-200">
-                    <td class="sticky-column px-6 py-4 text-sm font-medium text-gray-900 bg-white">${player.name}</td>
-                    ${player.nextFixtures.map(fixture => `
+                    <td class="sticky-column px-6 py-4 text-sm font-medium text-gray-900 bg-white">${player.name || 'N/A'}</td>
+                    ${(player.nextFixtures || []).map(fixture => `
                         <td class="px-4 py-4">
                             <div style="${getFDRColor(fixture.difficulty)}" class="text-sm rounded-lg p-2 text-center">
-                                ${fixture.opponent} (${fixture.isHome ? 'H' : 'A'})
+                                ${fixture.opponent || 'N/A'} (${fixture.isHome ? 'H' : 'A'})
                             </div>
                         </td>
                     `).join('')}
@@ -425,6 +445,8 @@
         }
 
         function populatePositionSummary(positionData) {
+            if (!positionData || !Array.isArray(positionData)) return;
+            
             const summaryDiv = document.getElementById('positionSummary');
             const positionColors = {
                 GKP: 'from-yellow-400 to-yellow-500',
@@ -434,16 +456,16 @@
             };
 
             const gridContent = positionData.map(pos => `
-                <div class="relative bg-gradient-to-br ${positionColors[pos.position]} rounded-xl p-6 text-white transform hover:scale-105 transition duration-300">
+                <div class="relative bg-gradient-to-br ${positionColors[pos.position] || ''} rounded-xl p-6 text-white transform hover:scale-105 transition duration-300">
                     <div class="absolute top-0 right-0 w-24 h-24 opacity-20">
-                        <img src="${pos.topScorer.image}" alt="${pos.topScorer.name}" class="w-full h-full object-cover rounded-tr-xl">
+                        ${pos.topScorer && pos.topScorer.image ? `<img src="${pos.topScorer.image}" alt="${pos.topScorer.name || 'Player'}" class="w-full h-full object-cover rounded-tr-xl">` : ''}
                     </div>
-                    <h3 class="text-xl font-bold mb-2">${pos.position}</h3>
-                    <p class="text-3xl font-bold">${pos.totalPoints}</p>
+                    <h3 class="text-xl font-bold mb-2">${pos.position || 'N/A'}</h3>
+                    <p class="text-3xl font-bold">${pos.totalPoints || 'N/A'}</p>
                     <p class="text-sm opacity-90">Total Points</p>
                     <div class="mt-4 text-sm">
-                        <p>Top Scorer: ${pos.topScorer.name}</p>
-                        <p>Points: ${pos.topScorer.points}</p>
+                        <p>Top Scorer: ${pos.topScorer ? pos.topScorer.name || 'N/A' : 'N/A'}</p>
+                        <p>Points: ${pos.topScorer ? pos.topScorer.points || 'N/A' : 'N/A'}</p>
                     </div>
                 </div>
             `).join('');
@@ -453,19 +475,23 @@
         }
 
         function populateTransferSuggestions(suggestions) {
+            if (!suggestions) return;
+            
             const positions = ['gkp', 'def', 'mid', 'fwd'];
             positions.forEach(pos => {
                 const container = document.getElementById(`${pos}Suggestions`);
+                if (!container || !suggestions[pos]) return;
+                
                 container.innerHTML = suggestions[pos].map(player => `
                     <div class="player-suggestion-card">
-                        <img src="${player.image}" alt="${player.name}">
+                        ${player.image ? `<img src="${player.image}" alt="${player.name || 'Player'}">` : ''}
                         <div class="player-overlay">
-                            <h4 class="font-bold">${player.name}</h4>
-                            <p class="text-sm">${player.points} pts</p>
+                            <h4 class="font-bold">${player.name || 'N/A'}</h4>
+                            <p class="text-sm">${player.points || 'N/A'} pts</p>
                             <div class="mt-2">
-                                ${player.nextFixtures.map(fixture => `
+                                ${(player.nextFixtures || []).map(fixture => `
                                     <span class="fixture-pill" style="${getFDRColor(fixture.difficulty)}">
-                                        ${fixture.opponent}
+                                        ${fixture.opponent || 'N/A'}
                                     </span>
                                 `).join('')}
                             </div>
@@ -476,8 +502,12 @@
         }
 
         function createCharts(weeklyPoints, weeklyRanks) {
-            createPointsChart(weeklyPoints);
-            createRankChart(weeklyRanks);
+            if (weeklyPoints && Array.isArray(weeklyPoints)) {
+                createPointsChart(weeklyPoints);
+            }
+            if (weeklyRanks && Array.isArray(weeklyRanks)) {
+                createRankChart(weeklyRanks);
+            }
         }
 
         function createPointsChart(weeklyPoints) {
@@ -554,12 +584,14 @@
         }
 
         function createLast3GWsChart(teamData) {
+            if (!teamData || !Array.isArray(teamData)) return;
+            
             const ctx = document.getElementById('last3GWsChart').getContext('2d');
             if (last3GWsChart) last3GWsChart.destroy();
 
             // Sort players by last 3 GWs total points
             const playerPoints = teamData.map(player => ({
-                name: player.name,
+                name: player.name || 'N/A',
                 points: player.last3GWPoints || 0
             })).sort((a, b) => b.points - a.points);
 
