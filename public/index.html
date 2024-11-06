@@ -36,9 +36,57 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script>
-        function populateTransferMarketInsights(data) {
-            // Implementation will go here
-        }
+        function populateTransferMarketInsights(transfersIn, transfersOut) {
+    // Populate Transfers In
+    const transfersInDiv = document.getElementById('transfersIn');
+    if (!transfersIn || !transfersIn.length) {
+        transfersInDiv.innerHTML = '<p class="text-slate-600">No transfer data available</p>';
+        return;
+    }
+
+    transfersInDiv.innerHTML = transfersIn.map(player => `
+        <div class="player-card glass-effect rounded-xl p-4 shadow-md">
+            <div class="player-image-overlay mb-3">
+                <img src="${player.photoUrl}" alt="${player.name}" class="w-full h-32 object-cover rounded-lg">
+            </div>
+            <h3 class="font-semibold text-slate-800">${player.name}</h3>
+            <p class="text-sm text-slate-600">${player.team}</p>
+            <p class="text-sm text-green-500 mt-2">
+                <i class="fas fa-arrow-up mr-1"></i>
+                ${player.transfersIn.toLocaleString()} transfers in
+            </p>
+            <p class="text-sm text-blue-500">
+                <i class="fas fa-pound-sign mr-1"></i>
+                ${player.price}m
+            </p>
+        </div>
+    `).join('');
+
+    // Populate Transfers Out
+    const transfersOutDiv = document.getElementById('transfersOut');
+    if (!transfersOut || !transfersOut.length) {
+        transfersOutDiv.innerHTML = '<p class="text-slate-600">No transfer data available</p>';
+        return;
+    }
+
+    transfersOutDiv.innerHTML = transfersOut.map(player => `
+        <div class="player-card glass-effect rounded-xl p-4 shadow-md">
+            <div class="player-image-overlay mb-3">
+                <img src="${player.photoUrl}" alt="${player.name}" class="w-full h-32 object-cover rounded-lg">
+            </div>
+            <h3 class="font-semibold text-slate-800">${player.name}</h3>
+            <p class="text-sm text-slate-600">${player.team}</p>
+            <p class="text-sm text-red-500 mt-2">
+                <i class="fas fa-arrow-down mr-1"></i>
+                ${player.transfersOut.toLocaleString()} transfers out
+            </p>
+            <p class="text-sm text-blue-500">
+                <i class="fas fa-pound-sign mr-1"></i>
+                ${player.price}m
+            </p>
+        </div>
+    `).join('');
+}
 
         function populateSuspensionRisk(data) {
             const suspensionRiskDiv = document.getElementById('suspensionRisk');
@@ -57,6 +105,31 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     <p class="text-sm text-yellow-500 mt-2">
                         <i class="fas fa-exclamation-triangle mr-1"></i>
                         ${player.yellowCards} yellow cards
+                    </p>
+                </div>
+            `).join('');
+
+            function populateCaptainOptions(data) {
+            const captainOptionsDiv = document.getElementById('captainOptions');
+            if (!data || !data.length) {
+                captainOptionsDiv.innerHTML = '<p class="text-slate-600">No captain suggestions available</p>';
+                return;
+            }
+
+            captainOptionsDiv.innerHTML = data.map(player => `
+                <div class="player-card glass-effect rounded-xl p-4 shadow-md">
+                    <div class="player-image-overlay mb-3">
+                        <img src="${player.photoUrl}" alt="${player.name}" class="w-full h-32 object-cover rounded-lg">
+                    </div>
+                    <h3 class="font-semibold text-slate-800">${player.name}</h3>
+                    <p class="text-sm text-slate-600">${player.team}</p>
+                    <p class="text-sm text-green-500 mt-2">
+                        <i class="fas fa-star mr-1"></i>
+                        Form: ${player.form}
+                    </p>
+                    <p class="text-sm text-blue-500">
+                        <i class="fas fa-calendar mr-1"></i>
+                        Next: ${player.nextFixture}
                     </p>
                 </div>
             `).join('');
