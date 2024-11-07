@@ -101,7 +101,8 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       currentTeam.push({
         name: player.web_name,
         nextFixtures,
-        last3GWPoints
+        last3GWPoints,
+        image: `https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.code}.png`
       });
     }
 
@@ -134,7 +135,8 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
             gwInSquad: 0,
             starts: 0,
             cappedPoints: 0,
-            playerPoints: 0
+            playerPoints: 0,
+            image: `https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.code}.png`
           };
         }
 

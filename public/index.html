@@ -78,6 +78,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             background: #94a3b8;
             border-radius: 3px;
         }
+        .fpl-green {
+            color: #6CAB3C;
+        }
+        .fpl-red {
+            color: #D0021B;
+        }
+        .fpl-blue {
+            color: #00529F;
+        }
+        .fpl-purple {
+            color: #7A297B;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen custom-scrollbar">
@@ -106,6 +118,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         class="mt-6 w-full bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
                     <i class="fas fa-search text-xl"></i> Analyze Stats
                 </button>
+                <p id="inputWarning" class="text-red-500 mt-2 hidden">Please enter a valid numeric Manager ID.</p>
             </div>
         </div>
 
@@ -165,11 +178,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
         </div>
 
-        <!-- Share Button -->
+        <!-- Buy Me a Coffee Button -->
         <div class="flex justify-center mt-16">
-            <button onclick="shareApp()" 
-                    class="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-10 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
-                <i class="fas fa-share-alt text-xl"></i> Share App
+            <button onclick="buyMeACoffee()" 
+                    class="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:from-yellow-500 hover:via-yellow-600 hover:to-yellow-700 text-white font-bold py-4 px-10 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+                <i class="fas fa-coffee text-xl"></i> Buy Me a Coffee
             </button>
         </div>
 
@@ -188,13 +201,41 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let rankChart = null;
         let last3GWsChart = null;
 
+        document.getElementById('managerId').addEventListener('input', function (e) {
+            const input = e.target.value;
+            if (!/^\d*$/.test(input)) {
+                document.getElementById('inputWarning').classList.remove('hidden');
+            } else {
+                document.getElementById('inputWarning').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('managerId').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                analyzeManager();
+            }
+        });
+
         async function analyzeManager() {
             const managerId = document.getElementById('managerId').value;
+            if (!/^\d+$/.test(managerId)) {
+                document.getElementById('inputWarning').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('inputWarning').classList.add('hidden');
+
             const resultsDiv = document.getElementById('results');
             const chartsDiv = document.getElementById('charts');
             const currentTeamFixtures = document.getElementById('currentTeamFixtures');
             const positionSummaryDiv = document.getElementById('positionSummary');
             const last3GWsDiv = document.getElementById('last3GWs');
+
+            // Clear previous content
+            resultsDiv.innerHTML = '';
+            chartsDiv.classList.add('hidden');
+            currentTeamFixtures.classList.add('hidden');
+            positionSummaryDiv.classList.add('hidden');
+            last3GWsDiv.classList.add('hidden');
 
             // Display loading spinner
             resultsDiv.innerHTML = `
@@ -202,10 +243,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
                 </div>
             `;
-            chartsDiv.classList.add('hidden');
-            currentTeamFixtures.classList.add('hidden');
-            positionSummaryDiv.classList.add('hidden');
-            last3GWsDiv.classList.add('hidden');
 
             try {
                 const response = await fetch(`/api/analyze-manager/${managerId}`);
@@ -369,13 +406,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 FWD: 'from-rose-400 to-rose-500'
             };
 
-            const gridContent = positionData.map(pos => `
-                <div class="bg-gradient-to-br ${positionColors[pos.position]} rounded-2xl p-6 text-white transform hover:scale-105 transition duration-300 shadow-lg">
-                    <h3 class="text-xl font-bold mb-2">${pos.position}</h3>
-                    <p class="text-3xl font-bold">${pos.totalPoints}</p>
-                    <p class="text-sm opacity-90">Total Points</p>
-                </div>
-            `).join('');
+            const gridContent = positionData.map(pos => {
+                const highestScorer = pos.players.reduce((max, player) => player.totalPoints > max.totalPoints ? player : max, pos.players[0]);
+                return `
+                    <div class="bg-gradient-to-br ${positionColors[pos.position]} rounded-2xl p-6 text-white transform hover:scale-105 transition duration-300 shadow-lg flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">${pos.position}</h3>
+                            <p class="text-3xl font-bold">${pos.totalPoints}</p>
+                            <p class="text-sm opacity-90">Total Points</p>
+                        </div>
+                        <img src="${highestScorer.image}" alt="${highestScorer.name}" class="w-16 h-16 rounded-full border-2 border-white">
+                    </div>
+                `;
+            }).join('');
 
             summaryDiv.querySelector('.grid').innerHTML = gridContent;
             summaryDiv.classList.remove('hidden');
@@ -508,15 +551,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
         }
   
-        function shareApp() {
-            const url = window.location.href;
-            navigator.share ? 
-                navigator.share({ 
-                    url, 
-                    text: "Check out this FPL Manager stats app!", 
-                    title: "FPL Manager Stats" 
-                }) : 
-                alert("Sharing not supported on this device.");
+        function buyMeACoffee() {
+            window.open('https://www.buymeacoffee.com/Oladeeayo', '_blank');
         }
     </script>
 </body>
