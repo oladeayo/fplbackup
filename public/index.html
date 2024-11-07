@@ -2,7 +2,7 @@
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
 </script>
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -77,25 +77,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #94a3b8;
             border-radius: 3px;
-        }
-        [data-theme="dark"] {
-            background-color: #1a202c;
-            color: #cbd5e1;
-        }
-        [data-theme="dark"] .glass-effect {
-            background: rgba(26, 32, 44, 0.95);
-        }
-        [data-theme="dark"] .sticky-column {
-            background-color: #1a202c;
-        }
-        [data-theme="dark"] .gradient-text {
-            background: linear-gradient(135deg, #3B82F6, #6366F1, #8B5CF6);
-        }
-        [data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-track {
-            background: #2d3748;
-        }
-        [data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #4a5568;
         }
     </style>
 </head>
@@ -179,17 +160,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- Last 3 GWs Performance -->
         <div id="last3GWs" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
             <h2 class="text-2xl font-bold text-slate-800 mb-8">Last 3 Gameweeks Performance</h2>
-            <div class="relative h-[500px]">
+            <div class="relative h-[400px]">
                 <canvas id="last3GWsChart"></canvas>
             </div>
         </div>
 
-        <!-- Buy Coffee Button -->
+        <!-- Share Button -->
         <div class="flex justify-center mt-16">
-            <a href="https://www.buymeacoffee.com/Oladeeayo" target="_blank" 
-               class="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-10 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
-                <i class="fas fa-coffee text-xl"></i> Buy Me a Coffee
-            </a>
+            <button onclick="shareApp()" 
+                    class="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-10 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+                <i class="fas fa-share-alt text-xl"></i> Share App
+            </button>
         </div>
 
         <!-- Footer Section -->
@@ -393,7 +374,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <h3 class="text-xl font-bold mb-2">${pos.position}</h3>
                     <p class="text-3xl font-bold">${pos.totalPoints}</p>
                     <p class="text-sm opacity-90">Total Points</p>
-                    <img src="${pos.highestScorerImage}" alt="${pos.highestScorerName}" class="w-16 h-16 rounded-full mt-4">
                 </div>
             `).join('');
 
@@ -538,28 +518,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 }) : 
                 alert("Sharing not supported on this device.");
         }
-
-        // Clear old cache
-        if ('caches' in window) {
-            caches.keys().then(function(names) {
-                for (let name of names) caches.delete(name);
-            });
-        }
-
-        // Toggle light/dark mode
-        const toggleTheme = () => {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            html.setAttribute('data-theme', newTheme);
-        };
-
-        // Add theme toggle button
-        const themeToggleButton = document.createElement('button');
-        themeToggleButton.innerHTML = '<i class="fas fa-adjust"></i>';
-        themeToggleButton.classList.add('fixed', 'top-4', 'right-4', 'bg-blue-500', 'text-white', 'p-2', 'rounded-full', 'shadow-lg', 'hover:bg-blue-600', 'transition', 'duration-300');
-        themeToggleButton.onclick = toggleTheme;
-        document.body.appendChild(themeToggleButton);
     </script>
 </body>
 </html>
