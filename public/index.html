@@ -2,7 +2,7 @@
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
 </script>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,7 +19,7 @@
     <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l;j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-WVJS3TZ7');</script>
 <!-- End Google Tag Manager -->
@@ -78,6 +78,28 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             background: #94a3b8;
             border-radius: 3px;
         }
+        .dark-mode {
+            background-color: #1a202c;
+            color: #cbd5e0;
+        }
+        .dark-mode .glass-effect {
+            background: rgba(26, 32, 44, 0.95);
+        }
+        .dark-mode .sticky-column {
+            background-color: #2d3748;
+        }
+        .dark-mode .gradient-text {
+            background: linear-gradient(135deg, #3B82F6, #6366F1, #8B5CF6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .dark-mode .custom-scrollbar::-webkit-scrollbar-track {
+            background: #2d3748;
+        }
+        .dark-mode .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #4a5568;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen custom-scrollbar">
@@ -93,6 +115,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="text-center mb-16">
             <h1 class="text-5xl md:text-6xl font-extrabold gradient-text mb-6 leading-tight">Check Manager Stats</h1>
             <p class="text-slate-600 text-xl md:text-2xl font-medium">Unlock insights into your FPL team performance</p>
+        </div>
+
+        <!-- Dark Mode Toggle -->
+        <div class="flex justify-center mb-8">
+            <button onclick="toggleDarkMode()" class="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 text-white font-bold py-2 px-4 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+                <i class="fas fa-adjust text-xl"></i> Toggle Dark Mode
+            </button>
         </div>
 
         <!-- Input Section -->
@@ -114,7 +143,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <!-- Position Summary Card -->
         <div id="positionSummary" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 hidden card-hover">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">Position Summary</h2>
+            <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-chart-pie text-xl mr-2"></i> Position Summary</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
                 <!-- Populated by JavaScript -->
             </div>
@@ -124,7 +153,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div id="charts" class="max-w-7xl mx-auto mt-10 space-y-10 hidden">
             <!-- Points Chart -->
             <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-                <h2 class="text-2xl font-bold text-slate-800 mb-8">Points Per Gameweek</h2>
+                <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-chart-line text-xl mr-2"></i> Points Per Gameweek</h2>
                 <div class="relative h-[400px]">
                     <canvas id="pointsChart"></canvas>
                 </div>
@@ -132,7 +161,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             <!-- Rank Chart -->
             <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-                <h2 class="text-2xl font-bold text-slate-800 mb-8">Rank Per Gameweek</h2>
+                <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-chart-bar text-xl mr-2"></i> Rank Per Gameweek</h2>
                 <div class="relative h-[400px]">
                     <canvas id="rankChart"></canvas>
                 </div>
@@ -141,7 +170,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <!-- Current Team & Fixtures Card -->
         <div id="currentTeamFixtures" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">Upcoming Fixtures</h2>
+            <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-calendar-alt text-xl mr-2"></i> Upcoming Fixtures</h2>
             <div class="overflow-x-auto responsive-table">
                 <table class="min-w-full">
                     <thead>
@@ -159,18 +188,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <!-- Last 3 GWs Performance -->
         <div id="last3GWs" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">Last 3 Gameweeks Performance</h2>
-            <div class="relative h-[400px]">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-chart-bar text-xl mr-2"></i> Last 3 Gameweeks Performance</h2>
+            <div class="relative h-[500px]">
                 <canvas id="last3GWsChart"></canvas>
             </div>
         </div>
 
-        <!-- Share Button -->
+        <!-- Buy Coffee Button -->
         <div class="flex justify-center mt-16">
-            <button onclick="shareApp()" 
-                    class="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-10 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
-                <i class="fas fa-share-alt text-xl"></i> Share App
-            </button>
+            <a href="https://www.buymeacoffee.com/Oladeeayo" target="_blank" 
+               class="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-10 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+                <i class="fas fa-coffee text-xl"></i> Buy Me a Coffee
+            </a>
         </div>
 
         <!-- Footer Section -->
@@ -242,7 +271,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const resultsDiv = document.getElementById('results');
             let html = `
                 <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-                    <h2 class="text-2xl font-bold text-slate-800 mb-8">Manager's Summary</h2>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-user text-xl mr-2"></i> Manager's Summary</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-4">
                             <p class="text-slate-600"><span class="font-semibold">Name:</span> ${data.managerInfo.name}</p>
@@ -269,7 +298,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
                     <div class="flex flex-col md:flex-row items-center justify-between mb-8">
-                        <h2 class="text-2xl font-bold text-slate-800 mb-4 md:mb-0">Squad Performance</h2>
+                        <h2 class="text-2xl font-bold text-slate-800 mb-4 md:mb-0"><i class="fas fa-users text-xl mr-2"></i> Squad Performance</h2>
                         <div class="flex items-center gap-4">
                             <span class="text-slate-600">Filter by position:</span>
                             <select id="positionFilter" class="px-4 py-2 bg-white/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400">
@@ -507,17 +536,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 }
             });
         }
-  
-        function shareApp() {
-            const url = window.location.href;
-            navigator.share ? 
-                navigator.share({ 
-                    url, 
-                    text: "Check out this FPL Manager stats app!", 
-                    title: "FPL Manager Stats" 
-                }) : 
-                alert("Sharing not supported on this device.");
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            html.classList.toggle('dark-mode');
         }
+
+        function clearCache() {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) caches.delete(name);
+                });
+            }
+        }
+
+        window.onload = clearCache;
     </script>
 </body>
 </html>
