@@ -79,14 +79,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l;j.async=true;j.src=
             border-radius: 3px;
         }
         .dark-mode {
-            background-color: #1a202c;
-            color: #cbd5e0;
+            background-color: #121212;
+            color: #e0e0e0;
         }
         .dark-mode .glass-effect {
-            background: rgba(26, 32, 44, 0.95);
+            background: rgba(18, 18, 18, 0.95);
         }
         .dark-mode .sticky-column {
-            background-color: #2d3748;
+            background-color: #1f1f1f;
         }
         .dark-mode .gradient-text {
             background: linear-gradient(135deg, #3B82F6, #6366F1, #8B5CF6);
@@ -95,10 +95,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l;j.async=true;j.src=
             -webkit-text-fill-color: transparent;
         }
         .dark-mode .custom-scrollbar::-webkit-scrollbar-track {
-            background: #2d3748;
+            background: #1f1f1f;
         }
         .dark-mode .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #4a5568;
+        }
+        .dark-mode .text-slate-600 {
+            color: #a0aec0;
+        }
+        .dark-mode .text-slate-800 {
+            color: #e0e0e0;
         }
     </style>
 </head>
@@ -108,6 +114,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l;j.async=true;j.src=
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
+    <!-- Dark Mode Toggle -->
+    <div class="fixed top-4 right-4">
+        <button onclick="toggleDarkMode()" class="bg-gray-800 text-white p-2 rounded-full shadow-md">
+            <i class="fas fa-adjust text-lg"></i>
+        </button>
+    </div>
+
     <!-- Main Container -->
     <div class="container mx-auto px-4 py-8 max-w-7xl">
         
@@ -115,13 +128,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="text-center mb-16">
             <h1 class="text-5xl md:text-6xl font-extrabold gradient-text mb-6 leading-tight">Check Manager Stats</h1>
             <p class="text-slate-600 text-xl md:text-2xl font-medium">Unlock insights into your FPL team performance</p>
-        </div>
-
-        <!-- Dark Mode Toggle -->
-        <div class="flex justify-center mb-8">
-            <button onclick="toggleDarkMode()" class="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 text-white font-bold py-2 px-4 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
-                <i class="fas fa-adjust text-xl"></i> Toggle Dark Mode
-            </button>
         </div>
 
         <!-- Input Section -->
