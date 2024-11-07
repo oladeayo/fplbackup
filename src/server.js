@@ -234,7 +234,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     res.json(analysis);
   } catch (error) {
     console.error('Error analyzing manager:', error);
-    res.status(500).json({ error: 'Failed to analyze manager' });
+    res.status(500).json({ error: 'Manager data could not be retrieved' });
   }
 });
 
