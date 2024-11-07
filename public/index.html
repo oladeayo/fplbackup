@@ -415,7 +415,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <p class="text-3xl font-bold">${pos.totalPoints}</p>
                             <p class="text-sm opacity-90">Total Points</p>
                         </div>
-                        <img src="${highestScorer.image}" alt="${highestScorer.name}" class="w-16 h-16 rounded-full border-2 border-white">
+                        <img src="${highestScorer.image}" alt="${highestScorer.name}" class="w-16 h-16 rounded-full border-2 border-white" onerror="this.onerror=null;this.src='default-image.png';">
                     </div>
                 `;
             }).join('');
