@@ -559,6 +559,67 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 }
             });
         }
+
+        
+        function createXGIScatterChart(data) {
+        const ctx = document.getElementById('xgiScatterChart').getContext('2d');
+        const playerData = data.playerStats.map(player => ({
+            x: player.xG || 0,
+            y: player.xI || 0,
+            label: player.name,
+            position: player.position
+        }));
+
+        const positionColors = {
+            GKP: 'rgba(128, 128, 128, 0.7)',
+            DEF: 'rgba(231, 76, 60, 0.7)', 
+            MID: 'rgba(46, 204, 113, 0.7)',
+            FWD: 'rgba(52, 152, 219, 0.7)'
+        };
+
+        new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    data: playerData,
+                    backgroundColor: playerData.map(d => positionColors[d.position]),
+                    pointRadius: 8,
+                    pointHoverRadius: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const point = context.raw;
+                                return `${point.label}: (xG: ${point.x.toFixed(2)}, xI: ${point.y.toFixed(2)})`;
+                            }
+                        }
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Expected Goals (xG)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Expected Involvement (xI)'
+                        }
+                    }
+                }
+            }
+        });
+    }
   
         function shareApp() {
             const url = window.location.href;
