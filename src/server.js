@@ -51,8 +51,18 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const historyData = historyResponse.data;
     const leagueData = leagueResponse.data;
 
-    const currentGameweek = playerData.events.find(event => event.is_current).id;
-    const topManagerPoints = leagueData.standings.results[0].total;
+    // Check if required data exists
+    if (!playerData?.events || !leagueData?.standings?.results) {
+      throw new Error('Missing required data from API responses');
+    }
+
+    const currentEvent = playerData.events.find(event => event.is_current);
+    if (!currentEvent) {
+      throw new Error('Could not determine current gameweek');
+    }
+
+    const currentGameweek = currentEvent.id;
+    const topManagerPoints = leagueData.standings.results[0]?.total || 0;
     
     // Initialize analysis data structure
     let totalCaptaincyPoints = 0;
@@ -78,16 +88,19 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     // Get current team and fixtures
     const currentTeam = [];
     const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${currentGameweek}/picks/`);
-    const managerPicks = managerPicksResponse.data.picks;
+    const managerPicks = managerPicksResponse.data?.picks || [];
 
     for (const pick of managerPicks) {
-      const player = playerData.elements.find(p => p.id === pick.element);
+      const player = playerData.elements?.find(p => p.id === pick.element);
       if (!player) continue;
 
       const fixturesResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
-      const nextFixtures = fixturesResponse.data.fixtures.slice(0, 5).map(fixture => {
+      const fixtures = fixturesResponse.data?.fixtures || [];
+      const history = fixturesResponse.data?.history || [];
+
+      const nextFixtures = fixtures.slice(0, 5).map(fixture => {
         const isHome = fixture.is_home;
-        const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h)).short_name;
+        const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h))?.short_name || 'Unknown';
         return {
           opponent,
           isHome,
@@ -96,12 +109,12 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       });
 
       // Calculate points for last 3 gameweeks
-      const last3GWPoints = fixturesResponse.data.history.slice(-3).reduce((sum, game) => sum + game.total_points, 0);
+      const last3GWPoints = history.slice(-3).reduce((sum, game) => sum + (game.total_points || 0), 0);
 
       // Calculate xGI and GI for last 3 gameweeks
-      const last3GWStats = fixturesResponse.data.history.slice(-3);
-      const xGI = last3GWStats.reduce((sum, game) => sum + (game.expected_goals + game.expected_assists), 0);
-      const GI = last3GWStats.reduce((sum, game) => sum + (game.goals_scored + game.assists), 0);
+      const last3GWStats = history.slice(-3);
+      const xGI = last3GWStats.reduce((sum, game) => sum + ((game.expected_goals || 0) + (game.expected_assists || 0)), 0);
+      const GI = last3GWStats.reduce((sum, game) => sum + ((game.goals_scored || 0) + (game.assists || 0)), 0);
 
       currentTeam.push({
         name: player.web_name,
@@ -115,8 +128,9 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     for (let gw = 1; gw <= currentGameweek; gw++) {
       const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${gw}/picks/`);
       const managerPicksData = managerPicksResponse.data;
-      const managerPicks = managerPicksData.picks;
+      if (!managerPicksData?.picks) continue;
 
+      const managerPicks = managerPicksData.picks;
       const isBenchBoost = managerPicksData.active_chip === "bboost";
       const isTripleCaptain = managerPicksData.active_chip === "3xc";
 
@@ -124,18 +138,19 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       
       for (const pick of managerPicks) {
         const playerId = pick.element;
-        const player = playerData.elements.find(p => p.id == playerId);
+        const player = playerData.elements?.find(p => p.id == playerId);
         if (!player) continue;
 
         const playerHistoryResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
-        const playerHistory = playerHistoryResponse.data.history;
+        const playerHistory = playerHistoryResponse.data?.history || [];
         const gameweekHistory = playerHistory.find(history => history.round === gw);
         const pointsThisWeek = gameweekHistory ? gameweekHistory.total_points : 0;
 
         if (!playerStats[playerId]) {
+          const team = playerData.teams[player.team - 1]?.name || 'Unknown';
           playerStats[playerId] = {
             name: player.web_name,
-            team: playerData.teams[player.team - 1].name,
+            team,
             position: ["GKP", "DEF", "MID", "FWD"][player.element_type - 1],
             totalPointsActive: 0,
             gwInSquad: 0,
@@ -182,7 +197,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       
       // Update weekly stats
       weeklyPoints[gw - 1] = gwPoints;
-      const gwRank = historyData.current.find(h => h.event === gw)?.overall_rank || 0;
+      const gwRank = historyData.current?.find(h => h.event === gw)?.overall_rank || 0;
       weeklyRanks[gw - 1] = gwRank;
       
       // Update highest/lowest tracking
@@ -215,14 +230,14 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     // Prepare the complete analysis object
     const analysis = {
       managerInfo: {
-        name: `${managerEntryData.player_first_name} ${managerEntryData.player_last_name}`,
-        teamName: managerEntryData.name,
+        name: `${managerEntryData.player_first_name || ''} ${managerEntryData.player_last_name || ''}`,
+        teamName: managerEntryData.name || 'Unknown Team',
         overallRanking: managerEntryData.summary_overall_rank?.toLocaleString() || "N/A",
-        managerPoints: managerEntryData.summary_overall_points,
-        allChipsUsed: historyData.chips.map(chip => chip.name).join(", ") || "None",
-        lastSeasonRank: historyData.past.length > 0 ? historyData.past[historyData.past.length - 1].rank.toLocaleString() : "Didn't Play",
-        seasonBeforeLastRank: historyData.past.length > 1 ? historyData.past[historyData.past.length - 2].rank.toLocaleString() : "Didn't Play",
-        pointDifference: managerEntryData.summary_overall_points - topManagerPoints,
+        managerPoints: managerEntryData.summary_overall_points || 0,
+        allChipsUsed: (historyData.chips || []).map(chip => chip.name).join(", ") || "None",
+        lastSeasonRank: historyData.past?.length > 0 ? historyData.past[historyData.past.length - 1].rank.toLocaleString() : "Didn't Play",
+        seasonBeforeLastRank: historyData.past?.length > 1 ? historyData.past[historyData.past.length - 2].rank.toLocaleString() : "Didn't Play",
+        pointDifference: (managerEntryData.summary_overall_points || 0) - topManagerPoints,
         totalPointsLostOnBench,
         totalCaptaincyPoints,
         currentGameweek,
