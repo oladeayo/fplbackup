@@ -36,8 +36,9 @@ app.get('/api/bootstrap-static', async (req, res) => {
 app.get('/api/analyze-manager/:managerId', async (req, res) => {
   try {
     const { managerId } = req.params;
-    const leagueId = 314;
+    const leagueId = 314; // Your league ID
     
+    // Fetch all required data in parallel
     const [playerDataResponse, managerEntryResponse, historyResponse, leagueResponse] = await Promise.all([
       axios.get('https://fantasy.premierleague.com/api/bootstrap-static/'),
       axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/`),
@@ -53,27 +54,18 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const currentGameweek = playerData.events.find(event => event.is_current).id;
     const topManagerPoints = leagueData.standings.results[0].total;
     
+    // Initialize analysis data structure
     let totalCaptaincyPoints = 0;
     let totalPointsActive = 0;
     let totalPointsLostOnBench = 0;
     const playerStats = {};
     const positionPoints = { GKP: {}, DEF: {}, MID: {}, FWD: {} };
-    const suspensionWatchlist = [];
-    const transferSuggestions = { GKP: [], DEF: [], MID: [], FWD: [] };
-    const captaincyOptions = ['Salah', 'Saka', 'Palmer', 'Mbeumo', 'Son', 'Haaland', 'Isak', 'Watkins', 'Bruno']
-      .map(name => {
-        const player = playerData.elements.find(p => p.web_name === name);
-        return player ? {
-          name: player.web_name,
-          form: player.form,
-          photo: `https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.code}.png`
-        } : null;
-      })
-      .filter(Boolean);
 
+    // Process each gameweek
     const weeklyPoints = new Array(currentGameweek).fill(0);
     const weeklyRanks = new Array(currentGameweek).fill(0);
     
+    // Track highest and lowest stats
     let highestPoints = 0;
     let highestPointsGW = 0;
     let lowestPoints = Infinity;
@@ -83,43 +75,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     let lowestRank = 0;
     let lowestRankGW = 0;
 
-    // Process suspension watchlist
-    playerData.elements.forEach(player => {
-      if (player.yellow_cards >= 4 || player.red_cards > 0) {
-        suspensionWatchlist.push({
-          name: player.web_name,
-          team: playerData.teams.find(t => t.id === player.team).short_name,
-          yellowCards: player.yellow_cards,
-          redCards: player.red_cards,
-          photo: `https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.code}.png`
-        });
-      }
-    });
-
-    // Calculate FD Index and populate transfer suggestions
-    playerData.elements.forEach(player => {
-      const position = ["GKP", "DEF", "MID", "FWD"][player.element_type - 1];
-      const fdIndex = parseFloat(player.form) / parseFloat(player.difficulty);
-      if (!isNaN(fdIndex) && fdIndex > 0) {
-        transferSuggestions[position].push({
-          name: player.web_name,
-          team: playerData.teams.find(t => t.id === player.team).short_name,
-          fdIndex,
-          photo: `https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.code}.png`,
-          form: player.form,
-          teamLogo: `https://resources.premierleague.com/premierleague/badges/t${player.team}.svg`
-        });
-      }
-    });
-
-    // Sort and limit transfer suggestions
-    Object.keys(transferSuggestions).forEach(pos => {
-      transferSuggestions[pos] = transferSuggestions[pos]
-        .sort((a, b) => b.fdIndex - a.fdIndex)
-        .slice(0, pos === 'GKP' ? 3 : pos === 'DEF' ? 4 : pos === 'MID' ? 5 : 4);
-    });
-
-    // Get current team and fixtures with xGI data
+    // Get current team and fixtures
     const currentTeam = [];
     const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${currentGameweek}/picks/`);
     const managerPicks = managerPicksResponse.data.picks;
@@ -139,24 +95,16 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
         };
       });
 
-      // Calculate xGI and GI for last 3 gameweeks
-      const last3GW = fixturesResponse.data.history.slice(-3);
-      const xGI = last3GW.reduce((sum, game) => sum + (game.expected_goals + game.expected_assists), 0);
-      const GI = last3GW.reduce((sum, game) => sum + (game.goals_scored + game.assists), 0);
-      const last3GWPoints = last3GW.reduce((sum, game) => sum + game.total_points, 0);
+      // Calculate points for last 3 gameweeks
+      const last3GWPoints = fixturesResponse.data.history.slice(-3).reduce((sum, game) => sum + game.total_points, 0);
 
       currentTeam.push({
         name: player.web_name,
-        position: ["GKP", "DEF", "MID", "FWD"][player.element_type - 1],
         nextFixtures,
-        last3GWPoints,
-        xGI,
-        GI,
-        photo: `https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.code}.png`
+        last3GWPoints
       });
     }
 
-    // Process gameweek data
     for (let gw = 1; gw <= currentGameweek; gw++) {
       const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${gw}/picks/`);
       const managerPicksData = managerPicksResponse.data;
@@ -186,7 +134,8 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
             gwInSquad: 0,
             starts: 0,
             cappedPoints: 0,
-            playerPoints: 0
+            playerPoints: 0,
+            photoId: player.code // Add photo ID
           };
         }
 
@@ -211,7 +160,8 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
           if (!positionPoints[position][playerId]) {
             positionPoints[position][playerId] = {
               name: playerStats[playerId].name,
-              points: 0
+              points: 0,
+              photoId: player.code // Add photo ID
             };
           }
           positionPoints[position][playerId].points += activePoints;
@@ -247,6 +197,15 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       }
     }
 
+    // Find highest scoring player for each position
+    const highestScorers = {};
+    for (const [position, players] of Object.entries(positionPoints)) {
+      const highestScorer = Object.values(players).reduce((max, player) => 
+        player.points > (max?.points || 0) ? player : max, null);
+      highestScorers[position] = highestScorer;
+    }
+
+    // Prepare the complete analysis object
     const analysis = {
       managerInfo: {
         name: `${managerEntryData.player_first_name} ${managerEntryData.player_last_name}`,
@@ -274,14 +233,11 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
         position,
         totalPoints: Object.values(players).reduce((sum, player) => sum + player.points, 0),
         players: Object.values(players).sort((a, b) => b.points - a.points),
-        topPlayer: Object.values(players).sort((a, b) => b.points - a.points)[0]
+        highestScorer: highestScorers[position]
       })),
       weeklyPoints,
       weeklyRanks,
-      currentTeam,
-      suspensionWatchlist,
-      transferSuggestions,
-      captaincyOptions
+      currentTeam
     };
 
     res.json(analysis);
@@ -291,6 +247,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
   }
 });
 
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

@@ -1,3 +1,6 @@
+<script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,13 +18,14 @@
     <meta http-equiv="Expires" content="0">
     <title>FPL Manager Stats & Insights | FPL Team Performance Analyzer</title>
     
+    <!-- Google Analytics -->
     <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-WVJS3TZ7');</script>
-    <!-- End Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-WVJS3TZ7');</script>
+<!-- End Google Tag Manager -->
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -53,21 +57,6 @@
             transform: translateY(-5px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
-        .scroll-cards {
-            overflow-x: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #94a3b8 #f1f5f9;
-        }
-        .scroll-cards::-webkit-scrollbar {
-            height: 6px;
-        }
-        .scroll-cards::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .scroll-cards::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-            border-radius: 3px;
-        }
         @media (max-width: 640px) {
             .responsive-table {
                 display: block;
@@ -95,19 +84,22 @@
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen custom-scrollbar">
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WVJS3TZ7"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WVJS3TZ7"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 
     <!-- Main Container -->
     <div class="container mx-auto px-4 py-8 max-w-7xl">
+        
         <!-- Header Section -->
-        <div class="text-center mb-16">
+        <!-- Header Section -->
+<div class="text-center mb-16">
             <h3 class="gradient-text mb-6 leading-tight">
                 <i class="fas fa-trophy text-4xl mb-4"></i><br>
                 Check Manager Stats
             </h3>
+</div>
             <p class="text-slate-600 text-xl md:text-2xl font-medium">
                 <i class="fas fa-chart-line mr-2"></i>
                 Unlock insights into your FPL team performance
@@ -184,51 +176,6 @@
             </div>
         </div>
 
-        <!-- xGI vs GI Scatterplot -->
-        <div id="xgiScatterplot" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">xGI vs GI Analysis (Last 3 GWs)</h2>
-            <div class="relative h-[400px]">
-                <canvas id="xgiChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Suspension Watchlist -->
-        <div id="suspensionWatchlist" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">
-                <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
-                Suspension Watchlist
-            </h2>
-            <div class="scroll-cards">
-                <div class="flex space-x-6 pb-4">
-                    <!-- Populated by JavaScript -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Transfer Suggestions -->
-        <div id="transferSuggestions" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">
-                <i class="fas fa-exchange-alt text-blue-500 mr-2"></i>
-                Transfer Suggestions
-            </h2>
-            <div class="space-y-6">
-                <!-- Populated by JavaScript -->
-            </div>
-        </div>
-
-        <!-- Captaincy Options -->
-        <div id="captaincyOptions" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">
-                <i class="fas fa-crown text-yellow-500 mr-2"></i>
-                Captaincy Options
-            </h2>
-            <div class="scroll-cards">
-                <div class="flex space-x-6 pb-4">
-                    <!-- Populated by JavaScript -->
-                </div>
-            </div>
-        </div>
-
         <!-- Share Button -->
         <div class="flex justify-center mt-16">
             <button onclick="shareApp()" 
@@ -251,7 +198,6 @@
         let pointsChart = null;
         let rankChart = null;
         let last3GWsChart = null;
-        let xgiChart = null;
 
         async function analyzeManager() {
             const managerId = document.getElementById('managerId').value;
@@ -260,7 +206,6 @@
             const currentTeamFixtures = document.getElementById('currentTeamFixtures');
             const positionSummaryDiv = document.getElementById('positionSummary');
             const last3GWsDiv = document.getElementById('last3GWs');
-            const xgiScatterplotDiv = document.getElementById('xgiScatterplot');
 
             // Display loading spinner
             resultsDiv.innerHTML = `
@@ -268,6 +213,10 @@
                     <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
                 </div>
             `;
+            chartsDiv.classList.add('hidden');
+            currentTeamFixtures.classList.add('hidden');
+            positionSummaryDiv.classList.add('hidden');
+            last3GWsDiv.classList.add('hidden');
 
             try {
                 const response = await fetch(`/api/analyze-manager/${managerId}`);
@@ -277,15 +226,13 @@
                 populateResults(data);
                 createCharts(data.weeklyPoints, data.weeklyRanks);
                 populateFixtures(data.currentTeam);
-                populatePositionSummary(data.positionSummary);
+                populatePositionSummary(data.positionSummary, data.playerStats);
                 createLast3GWsChart(data.currentTeam);
-                createXGIScatterplot(data.currentTeam);
-                populateSuspensionWatchlist(data.suspensionWatchlist);
-                populateTransferSuggestions(data.transferSuggestions);
-                populateCaptaincyOptions(data.captaincyOptions);
 
-                // Show all sections
-                [chartsDiv, currentTeamFixtures, positionSummaryDiv, last3GWsDiv, xgiScatterplotDiv].forEach(div => div.classList.remove('hidden'));
+                chartsDiv.classList.remove('hidden');
+                currentTeamFixtures.classList.remove('hidden');
+                positionSummaryDiv.classList.remove('hidden');
+                last3GWsDiv.classList.remove('hidden');
             } catch (error) {
                 resultsDiv.innerHTML = `
                     <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-xl">
@@ -295,189 +242,11 @@
                         </div>
                     </div>
                 `;
+                chartsDiv.classList.add('hidden');
+                currentTeamFixtures.classList.add('hidden');
+                positionSummaryDiv.classList.add('hidden');
+                last3GWsDiv.classList.add('hidden');
             }
-        }
-
-        function populatePositionSummary(positionSummary) {
-            const summaryDiv = document.getElementById('positionSummary');
-            const positionColors = {
-                GKP: 'from-amber-400 to-amber-500',
-                DEF: 'from-blue-400 to-blue-500',
-                MID: 'from-emerald-400 to-emerald-500',
-                FWD: 'from-rose-400 to-rose-500'
-            };
-
-            const gridContent = positionSummary.map(pos => `
-                <div class="bg-gradient-to-br ${positionColors[pos.position]} rounded-2xl p-6 text-white transform hover:scale-105 transition duration-300 shadow-lg">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h3 class="text-xl font-bold mb-2">${pos.position}</h3>
-                            <p class="text-3xl font-bold">${pos.totalPoints}</p>
-                            <p class="text-sm opacity-90">Total Points</p>
-                        </div>
-                        ${pos.topPlayer ? `
-                            <div class="w-20 h-20">
-                                <img src="${pos.topPlayer.photo}" alt="${pos.topPlayer.name}" class="w-full h-full object-cover rounded-full border-2 border-white shadow-lg">
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('');
-
-            summaryDiv.querySelector('.grid').innerHTML = gridContent;
-            summaryDiv.classList.remove('hidden');
-        }
-
-        function createXGIScatterplot(teamData) {
-            const ctx = document.getElementById('xgiChart').getContext('2d');
-            if (xgiChart) xgiChart.destroy();
-
-            const attackingPlayers = teamData.filter(player => 
-                player.position === 'MID' || player.position === 'FWD'
-            );
-
-            xgiChart = new Chart(ctx, {
-                type: 'scatter',
-                data: {
-                    datasets: [{
-                        label: 'Players',
-                        data: attackingPlayers.map(player => ({
-                            x: player.xGI,
-                            y: player.GI,
-                            name: player.name
-                        })),
-                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                        borderColor: 'rgb(59, 130, 246)',
-                        borderWidth: 1,
-                        pointRadius: 8,
-                        pointHoverRadius: 10
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => {
-                                    const point = context.raw;
-                                    return `${point.name}: xGI: ${point.x.toFixed(2)}, GI: ${point.y}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Expected Goal Involvement (xGI)'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Actual Goal Involvement (GI)'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function populateSuspensionWatchlist(watchlist) {
-            const container = document.querySelector('#suspensionWatchlist .scroll-cards > div');
-            container.innerHTML = watchlist.map(player => `
-                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md overflow-hidden">
-                    <div class="relative h-48">
-                        <img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover">
-                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
-                            <p class="text-white font-semibold">${player.name}</p>
-                             <div class="text-white text-sm">${player.team}</div>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <span class="text-yellow-500">
-                                    <i class="fas fa-square${player.yellowCards > 0 ? ' text-yellow-500' : ' text-gray-300'}"></i> × ${player.yellowCards}
-                                </span>
-                            </div>
-                            <div>
-                                <span class="text-red-500">
-                                    <i class="fas fa-square${player.redCards > 0 ? ' text-red-500' : ' text-gray-300'}"></i> × ${player.redCards}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function populateTransferSuggestions(suggestions) {
-            const container = document.querySelector('#transferSuggestions .space-y-6');
-            const positions = {
-                GKP: 'Goalkeepers',
-                DEF: 'Defenders',
-                MID: 'Midfielders',
-                FWD: 'Forwards'
-            };
-
-            container.innerHTML = Object.entries(suggestions).map(([position, players]) => `
-                <div>
-                    <h3 class="text-lg font-semibold text-slate-700 mb-4">${positions[position]}</h3>
-                    <div class="scroll-cards">
-                        <div class="flex space-x-6 pb-4">
-                            ${players.map(player => `
-                                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md overflow-hidden">
-                                    <div class="relative h-48">
-                                        <img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover">
-                                        <div class="absolute top-4 right-4">
-                                            <img src="${player.teamLogo}" alt="${player.team}" class="w-8 h-8">
-                                        </div>
-                                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
-                                            <p class="text-white font-semibold">${player.name}</p>
-                                            <p class="text-white text-sm">${player.team}</p>
-                                        </div>
-                                    </div>
-                                    <div class="p-4">
-                                        <div class="flex justify-between items-center">
-                                            <div>
-                                                <span class="text-sm text-slate-600">Form</span>
-                                                <p class="font-semibold">${player.form}</p>
-                                            </div>
-                                            <div>
-                                                <span class="text-sm text-slate-600">FD Index</span>
-                                                <p class="font-semibold">${player.fdIndex.toFixed(2)}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function populateCaptaincyOptions(options) {
-            const container = document.querySelector('#captaincyOptions .scroll-cards > div');
-            container.innerHTML = options.map(player => `
-                <div class="flex-shrink-0 w-64 bg-white rounded-xl shadow-md overflow-hidden">
-                    <div class="relative h-48">
-                        <img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover">
-                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
-                            <p class="text-white font-semibold">${player.name}</p>
-                            <p class="text-white text-sm">Form: ${player.form}</p>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center">
-                            <i class="fas fa-crown text-yellow-500 mr-2"></i>
-                            <span class="font-semibold">Captain Option</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
         }
 
         function populateResults(data) {
@@ -602,7 +371,7 @@
             `).join('');
         }
 
-        function populatePositionSummary(positionData) {
+        function populatePositionSummary(positionData, playerStats) {
             const summaryDiv = document.getElementById('positionSummary');
             const positionColors = {
                 GKP: 'from-amber-400 to-amber-500',
@@ -611,19 +380,38 @@
                 FWD: 'from-rose-400 to-rose-500'
             };
 
-            const gridContent = positionData.map(pos => {
-                const highestScorer = pos.players.reduce((max, player) => player.totalPoints > max.totalPoints ? player : max, pos.players[0]);
-                return `
-                    <div class="bg-gradient-to-br ${positionColors[pos.position]} rounded-2xl p-6 text-white transform hover:scale-105 transition duration-300 shadow-lg flex justify-between items-center">
+            // Find highest scoring player for each position
+            const highestScorers = {};
+            playerStats.forEach(player => {
+                if (!highestScorers[player.position] || 
+                    player.totalPointsActive > highestScorers[player.position].points) {
+                    highestScorers[player.position] = {
+                        name: player.name,
+                        points: player.totalPointsActive,
+                        photoId: player.id // Assuming player object has an id field for the photo
+                    };
+                }
+            });
+
+            const gridContent = positionData.map(pos => `
+                <div class="bg-gradient-to-br ${positionColors[pos.position]} rounded-2xl p-6 text-white transform hover:scale-105 transition duration-300 shadow-lg relative overflow-hidden">
+                    <div class="flex justify-between items-center">
                         <div>
                             <h3 class="text-xl font-bold mb-2">${pos.position}</h3>
                             <p class="text-3xl font-bold">${pos.totalPoints}</p>
                             <p class="text-sm opacity-90">Total Points</p>
+                            <p class="text-sm mt-2">Top: ${highestScorers[pos.position]?.name}</p>
                         </div>
-                        <img src="${highestScorer.image}" alt="${highestScorer.name}" class="w-16 h-16 rounded-full border-2 border-white" onerror="this.onerror=null;this.src='default-image.png';">
+                        <div class="absolute right-0 top-1/2 transform -translate-y-1/2">
+                            <img 
+                                src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${highestScorers[pos.position]?.photoId}.png" 
+                                alt="${highestScorers[pos.position]?.name}"
+                                class="h-24 object-cover opacity-75"
+                            />
+                        </div>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `).join('');
 
             summaryDiv.querySelector('.grid').innerHTML = gridContent;
             summaryDiv.classList.remove('hidden');
@@ -756,8 +544,15 @@
             });
         }
   
-        function buyMeACoffee() {
-            window.open('https://www.buymeacoffee.com/Oladeeayo', '_blank');
+        function shareApp() {
+            const url = window.location.href;
+            navigator.share ? 
+                navigator.share({ 
+                    url, 
+                    text: "Check out this FPL Manager stats app!", 
+                    title: "FPL Manager Stats" 
+                }) : 
+                alert("Sharing not supported on this device.");
         }
     </script>
 </body>
