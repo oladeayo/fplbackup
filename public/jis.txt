@@ -957,3 +957,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </script>
 </body>
 </html>
+
+
+
+I want the following addition to this index.html and server.js files.
+
+1. The Position Summary card Make the Picture of the Player with the highest points in that pisition in the squad show by the right end of each position.
+
+2. Use icons as necessary on all part.
+
+2. Add another card after Player's Last 3 Gameweeks Performance, this card will show a scatterplot of Player's xGI (which is addition of xG and xA) against their GI (which is Goals Scored + Goals Assisted) for player's in the manager's team (only midfielders and forward's), label it with player's name For the player's last 3 Gameweeks only.
+
+2. Add the following card's but these cards will be visible for anyone that visited the site even without entering the Manager's ID, the content of these cards should be shown in side scrollable form and should be limited to top 10 players except in cases mentioned otherwise.
+
+A suspension watchlist card - this card list player's that are on the verge of missing the next match based on FPL rule. Show the players Picture, their club and the number of cards they have.
+
+A manager transfer suggestion card - this card will show 3 GKPs, 4 DEFs, 5 MIDs and 4 FWDs with the highest FD Index (Form/fdr for next 3 Gameweeks) in each of these positions.
+
+Show the Players, their club logo and their next 3 fixtures with the fdr color.
+
+- Captaincy Option - this card will show only this player's 
+Salah, Saka,Palmer, Mbeumo, Son, Haaland, Isak, Watkins, Bruno their current form and their next 3 fixtures with FDR color.
+
+
+All of these cards should be added to existing cards and all the codes both index.html and server.js should be returned in full. Make sure the results are in mordern looks too.
