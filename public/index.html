@@ -388,7 +388,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     highestScorers[player.position] = {
                         name: player.name,
                         points: player.totalPointsActive,
-                        photoId: player.id // Assuming player object has an id field for the photo
+                        photoId: player.photoId // Changed from id to photoId
                     };
                 }
             });
@@ -407,6 +407,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${highestScorers[pos.position]?.photoId}.png" 
                                 alt="${highestScorers[pos.position]?.name}"
                                 class="h-24 object-cover opacity-75"
+                                onerror="this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png'"
                             />
                         </div>
                     </div>
