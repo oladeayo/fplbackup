@@ -98,10 +98,17 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       // Calculate points for last 3 gameweeks
       const last3GWPoints = fixturesResponse.data.history.slice(-3).reduce((sum, game) => sum + game.total_points, 0);
 
+      // Calculate xGI and GI for last 3 gameweeks
+      const last3GWStats = fixturesResponse.data.history.slice(-3);
+      const xGI = last3GWStats.reduce((sum, game) => sum + (game.expected_goals + game.expected_assists), 0);
+      const GI = last3GWStats.reduce((sum, game) => sum + (game.goals_scored + game.assists), 0);
+
       currentTeam.push({
         name: player.web_name,
         nextFixtures,
-        last3GWPoints
+        last3GWPoints,
+        xGI,
+        GI
       });
     }
 
@@ -135,7 +142,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
             starts: 0,
             cappedPoints: 0,
             playerPoints: 0,
-            photoId: player.code // Add photo ID
+            photoId: player.code
           };
         }
 
@@ -161,7 +168,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
             positionPoints[position][playerId] = {
               name: playerStats[playerId].name,
               points: 0,
-              photoId: player.code // Add photo ID
+              photoId: player.code
             };
           }
           positionPoints[position][playerId].points += activePoints;

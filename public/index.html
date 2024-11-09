@@ -81,6 +81,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             background: #94a3b8;
             border-radius: 3px;
         }
+        .player-image {
+            padding-right: 1.5rem;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen custom-scrollbar">
@@ -94,12 +97,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         
         <!-- Header Section -->
         <!-- Header Section -->
-<div class="text-center mb-16">
+        <div class="text-center mb-16">
             <h3 class="gradient-text mb-6 leading-tight">
                 <i class="fas fa-trophy text-4xl mb-4"></i><br>
                 Check Manager Stats
             </h3>
-</div>
+        </div>
             <p class="text-slate-600 text-xl md:text-2xl font-medium">
                 <i class="fas fa-chart-line mr-2"></i>
                 Unlock insights into your FPL team performance
@@ -125,7 +128,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <!-- Position Summary Card -->
         <div id="positionSummary" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 hidden card-hover">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">Position Summary</h2>
+            <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-users-viewfinder mr-2"></i>Position Summary</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
                 <!-- Populated by JavaScript -->
             </div>
@@ -135,7 +138,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div id="charts" class="max-w-7xl mx-auto mt-10 space-y-10 hidden">
             <!-- Points Chart -->
             <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-                <h2 class="text-2xl font-bold text-slate-800 mb-8">Points Per Gameweek</h2>
+                <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-chart-line mr-2"></i>Points Per Gameweek</h2>
                 <div class="relative h-[400px]">
                     <canvas id="pointsChart"></canvas>
                 </div>
@@ -143,7 +146,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             <!-- Rank Chart -->
             <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-                <h2 class="text-2xl font-bold text-slate-800 mb-8">Rank Per Gameweek</h2>
+                <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-ranking-star mr-2"></i>Rank Per Gameweek</h2>
                 <div class="relative h-[400px]">
                     <canvas id="rankChart"></canvas>
                 </div>
@@ -152,7 +155,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <!-- Current Team & Fixtures Card -->
         <div id="currentTeamFixtures" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">Upcoming Fixtures</h2>
+            <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-calendar-days mr-2"></i>Upcoming Fixtures</h2>
             <div class="overflow-x-auto responsive-table">
                 <table class="min-w-full">
                     <thead>
@@ -170,9 +173,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <!-- Last 3 GWs Performance -->
         <div id="last3GWs" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">Last 3 Gameweeks Performance</h2>
+            <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-chart-bar mr-2"></i>Last 3 Gameweeks Performance</h2>
             <div class="relative h-[400px]">
                 <canvas id="last3GWsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- xGI vs GI Scatter Plot -->
+        <div id="xgiScatter" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-chart-scatter mr-2"></i>xGI vs GI (Last 3 GWs)</h2>
+            <div class="relative h-[400px]">
+                <canvas id="xgiScatterChart"></canvas>
             </div>
         </div>
 
@@ -198,6 +209,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let pointsChart = null;
         let rankChart = null;
         let last3GWsChart = null;
+        let xgiScatterChart = null;
 
         async function analyzeManager() {
             const managerId = document.getElementById('managerId').value;
@@ -206,6 +218,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const currentTeamFixtures = document.getElementById('currentTeamFixtures');
             const positionSummaryDiv = document.getElementById('positionSummary');
             const last3GWsDiv = document.getElementById('last3GWs');
+            const xgiScatterDiv = document.getElementById('xgiScatter');
 
             // Display loading spinner
             resultsDiv.innerHTML = `
@@ -217,6 +230,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             currentTeamFixtures.classList.add('hidden');
             positionSummaryDiv.classList.add('hidden');
             last3GWsDiv.classList.add('hidden');
+            xgiScatterDiv.classList.add('hidden');
 
             try {
                 const response = await fetch(`/api/analyze-manager/${managerId}`);
@@ -228,11 +242,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 populateFixtures(data.currentTeam);
                 populatePositionSummary(data.positionSummary, data.playerStats);
                 createLast3GWsChart(data.currentTeam);
+                createXGIScatterChart(data.currentTeam);
 
                 chartsDiv.classList.remove('hidden');
                 currentTeamFixtures.classList.remove('hidden');
                 positionSummaryDiv.classList.remove('hidden');
                 last3GWsDiv.classList.remove('hidden');
+                xgiScatterDiv.classList.remove('hidden');
             } catch (error) {
                 resultsDiv.innerHTML = `
                     <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-xl">
@@ -246,6 +262,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 currentTeamFixtures.classList.add('hidden');
                 positionSummaryDiv.classList.add('hidden');
                 last3GWsDiv.classList.add('hidden');
+                xgiScatterDiv.classList.add('hidden');
             }
         }
 
@@ -253,7 +270,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const resultsDiv = document.getElementById('results');
             let html = `
                 <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
-                    <h2 class="text-2xl font-bold text-slate-800 mb-8">Manager's Summary</h2>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-user-shield mr-2"></i>Manager's Summary</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-4">
                             <p class="text-slate-600"><span class="font-semibold">Name:</span> ${data.managerInfo.name}</p>
@@ -280,7 +297,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover">
                     <div class="flex flex-col md:flex-row items-center justify-between mb-8">
-                        <h2 class="text-2xl font-bold text-slate-800 mb-4 md:mb-0">Squad Performance</h2>
+                        <h2 class="text-2xl font-bold text-slate-800 mb-4 md:mb-0"><i class="fas fa-users mr-2"></i>Squad Performance</h2>
                         <div class="flex items-center gap-4">
                             <span class="text-slate-600">Filter by position:</span>
                             <select id="positionFilter" class="px-4 py-2 bg-white/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400">
@@ -388,7 +405,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     highestScorers[player.position] = {
                         name: player.name,
                         points: player.totalPointsActive,
-                        photoId: player.photoId // Changed from id to photoId
+                        photoId: player.photoId
                     };
                 }
             });
@@ -406,7 +423,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <img 
                                 src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${highestScorers[pos.position]?.photoId}.png" 
                                 alt="${highestScorers[pos.position]?.name}"
-                                class="h-24 object-cover opacity-75"
+                                class="h-24 object-cover opacity-75 player-image"
                                 onerror="this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png'"
                             />
                         </div>
