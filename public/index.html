@@ -179,7 +179,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <!-- xGI vs GI Scatter Plot -->
         <div id="xgiScatter" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-chart-scatter mr-2"></i>xGI vs GI (Last 3 GWs)</h2>
+            <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-chart-scatter mr-2"></i>Top 20 Players xGI vs GI (Last 3 GWs)</h2>
             <div class="relative h-[400px]">
                 <canvas id="xgiScatterChart"></canvas>
             </div>
@@ -240,7 +240,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 populateFixtures(data.currentTeam);
                 populatePositionSummary(data.positionSummary, data.playerStats);
                 createLast3GWsChart(data.currentTeam);
-                createXGIScatterChart(data.currentTeam);
+                createXGIScatterChart(data.playerStats);
 
                 chartsDiv.classList.remove('hidden');
                 currentTeamFixtures.classList.remove('hidden');

@@ -80,6 +80,27 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${currentGameweek}/picks/`);
     const managerPicks = managerPicksResponse.data.picks;
 
+    // Get top 20 players data for xGI vs GI
+    const top20Players = playerData.elements
+      .sort((a, b) => b.total_points - a.total_points)
+      .slice(0, 20);
+
+    const top20PlayersStats = await Promise.all(
+      top20Players.map(async (player) => {
+        const playerHistoryResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
+        const last3GWStats = playerHistoryResponse.data.history.slice(-3);
+        const xGI = last3GWStats.reduce((sum, game) => sum + (game.expected_goals + game.expected_assists), 0);
+        const GI = last3GWStats.reduce((sum, game) => sum + (game.goals_scored + game.assists), 0);
+        
+        return {
+          name: player.web_name,
+          position: ["GKP", "DEF", "MID", "FWD"][player.element_type - 1],
+          xGI,
+          GI
+        };
+      })
+    );
+
     for (const pick of managerPicks) {
       const player = playerData.elements.find(p => p.id === pick.element);
       if (!player) continue;
@@ -98,17 +119,10 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       // Calculate points for last 3 gameweeks
       const last3GWPoints = fixturesResponse.data.history.slice(-3).reduce((sum, game) => sum + game.total_points, 0);
 
-      // Calculate xGI and GI for last 3 gameweeks
-      const last3GWStats = fixturesResponse.data.history.slice(-3);
-      const xGI = last3GWStats.reduce((sum, game) => sum + (game.expected_goals + game.expected_assists), 0);
-      const GI = last3GWStats.reduce((sum, game) => sum + (game.goals_scored + game.assists), 0);
-
       currentTeam.push({
         name: player.web_name,
         nextFixtures,
-        last3GWPoints,
-        xGI,
-        GI
+        last3GWPoints
       });
     }
 
@@ -244,7 +258,8 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       })),
       weeklyPoints,
       weeklyRanks,
-      currentTeam
+      currentTeam,
+      top20PlayersStats
     };
 
     res.json(analysis);
