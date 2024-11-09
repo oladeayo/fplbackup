@@ -177,14 +177,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
         </div>
 
-        <!-- xGI vs GI Scatter Plot -->
-        <div id="xgiScatter" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-chart-scatter mr-2"></i>Top 20 Players xGI vs GI (Last 3 GWs)</h2>
-            <div class="relative h-[400px]">
-                <canvas id="xgiScatterChart"></canvas>
-            </div>
-        </div>
-
         <!-- Share Button -->
         <div class="flex justify-center mt-16">
             <button onclick="shareApp()" 
@@ -207,7 +199,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let pointsChart = null;
         let rankChart = null;
         let last3GWsChart = null;
-        let xgiScatterChart = null;
 
         async function analyzeManager() {
             const managerId = document.getElementById('managerId').value;
@@ -216,7 +207,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const currentTeamFixtures = document.getElementById('currentTeamFixtures');
             const positionSummaryDiv = document.getElementById('positionSummary');
             const last3GWsDiv = document.getElementById('last3GWs');
-            const xgiScatterDiv = document.getElementById('xgiScatter');
 
             // Display loading spinner
             resultsDiv.innerHTML = `
@@ -228,7 +218,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             currentTeamFixtures.classList.add('hidden');
             positionSummaryDiv.classList.add('hidden');
             last3GWsDiv.classList.add('hidden');
-            xgiScatterDiv.classList.add('hidden');
 
             try {
                 const response = await fetch(`/api/analyze-manager/${managerId}`);
@@ -240,13 +229,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 populateFixtures(data.currentTeam);
                 populatePositionSummary(data.positionSummary, data.playerStats);
                 createLast3GWsChart(data.currentTeam);
-                createXGIScatterChart(data.top20PlayersStats);
 
                 chartsDiv.classList.remove('hidden');
                 currentTeamFixtures.classList.remove('hidden');
                 positionSummaryDiv.classList.remove('hidden');
                 last3GWsDiv.classList.remove('hidden');
-                xgiScatterDiv.classList.remove('hidden');
             } catch (error) {
                 resultsDiv.innerHTML = `
                     <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-xl">
@@ -260,7 +247,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 currentTeamFixtures.classList.add('hidden');
                 positionSummaryDiv.classList.add('hidden');
                 last3GWsDiv.classList.add('hidden');
-                xgiScatterDiv.classList.add('hidden');
             }
         }
 
@@ -560,67 +546,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
         }
 
-        
-        function createXGIScatterChart(teamData) {
-            const ctx = document.getElementById('xgiScatterChart').getContext('2d');
-            const playerData = teamData.map(player => ({
-                x: player.xGI || 0,
-                y: player.GI || 0,
-                label: player.name,
-                position: 'FWD' // Default position since server doesn't provide it
-            }));
-
-        const positionColors = {
-            GKP: 'rgba(128, 128, 128, 0.7)',
-            DEF: 'rgba(231, 76, 60, 0.7)', 
-            MID: 'rgba(46, 204, 113, 0.7)',
-            FWD: 'rgba(52, 152, 219, 0.7)'
-        };
-
-        new Chart(ctx, {
-            type: 'scatter',
-            data: {
-                datasets: [{
-                    data: playerData,
-                    backgroundColor: playerData.map(d => positionColors[d.position]),
-                    pointRadius: 8,
-                    pointHoverRadius: 10
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const point = context.raw;
-                                return `${point.label}: (xG: ${point.x.toFixed(2)}, xI: ${point.y.toFixed(2)})`;
-                            }
-                        }
-                    },
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Expected Goals (xG)'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Expected Involvement (xI)'
-                        }
-                    }
-                }
-            }
-        });
-    }
-  
         function shareApp() {
             const url = window.location.href;
             navigator.share ? 
