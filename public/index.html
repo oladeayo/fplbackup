@@ -561,14 +561,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         
-        function createXGIScatterChart(data) {
-        const ctx = document.getElementById('xgiScatterChart').getContext('2d');
-        const playerData = data.playerStats.map(player => ({
-            x: player.xG || 0,
-            y: player.xI || 0,
-            label: player.name,
-            position: player.position
-        }));
+        function createXGIScatterChart(teamData) {
+            const ctx = document.getElementById('xgiScatterChart').getContext('2d');
+            const playerData = teamData.map(player => ({
+                x: player.xGI || 0,
+                y: player.GI || 0,
+                label: player.name,
+                position: 'FWD' // Default position since server doesn't provide it
+            }));
 
         const positionColors = {
             GKP: 'rgba(128, 128, 128, 0.7)',
