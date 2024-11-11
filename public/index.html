@@ -243,6 +243,51 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
         </div>
 
+        <!-- FD Index Suggestions Card -->
+        <div id="fdIndexSuggestions" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>FD Index Transfer Suggestions
+            </h2>
+            <div class="space-y-8">
+                <!-- GKP Suggestions -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-amber-600">
+                        <i class="fas fa-hands mr-2"></i>Goalkeeper Suggestions
+                    </h3>
+                    <div id="gkpSuggestions" class="scroll-container">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                <!-- DEF Suggestions -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-blue-600">
+                        <i class="fas fa-shield mr-2"></i>Defender Suggestions
+                    </h3>
+                    <div id="defSuggestions" class="scroll-container">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                <!-- MID Suggestions -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-emerald-600">
+                        <i class="fas fa-running mr-2"></i>Midfielder Suggestions
+                    </h3>
+                    <div id="midSuggestions" class="scroll-container">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                <!-- FWD Suggestions -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-rose-600">
+                        <i class="fas fa-futbol mr-2"></i>Forward Suggestions
+                    </h3>
+                    <div id="fwdSuggestions" class="scroll-container">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Share Button -->
         <div class="flex justify-center mt-16">
             <button onclick="shareApp()" 
@@ -326,12 +371,44 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // Show cards and populate data
                 document.getElementById('suspensionRisk').classList.remove('hidden');
                 document.getElementById('transferTrends').classList.remove('hidden');
+                document.getElementById('fdIndexSuggestions').classList.remove('hidden');
                 populateSuspensionData({ suspendedPlayers, playersOn4Yellows });
-                populateTransferData({ mostTransferredIn: top10TransfersIn, mostTransferredOut: top10TransfersOut });
+                populateTransferData({ mostTransferredIn: top10TransfersIn, mostTransferredOut: top10TransferredOut });
+                populateFDIndexData(data.fdIndexData);
             } catch (error) {
                 console.error("Error loading data:", error);
             }
         });
+
+        function populateFDIndexData(fdIndexData) {
+            const positions = ['GKP', 'DEF', 'MID', 'FWD'];
+            
+            positions.forEach(pos => {
+                const containerDiv = document.getElementById(`${pos.toLowerCase()}Suggestions`);
+                const players = fdIndexData[pos];
+                
+                containerDiv.innerHTML = players.length ? 
+                    players.map(player => `
+                        <div class="player-card bg-white/50 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300">
+                            <div class="flex items-center space-x-4">
+                                <img 
+                                    src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photoId}.png" 
+                                    alt="${player.name}"
+                                    class="w-16 h-20 object-cover rounded-lg"
+                                    onerror="this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png'"
+                                >
+                                <div>
+                                    <h4 class="font-semibold text-slate-800">${player.name}</h4>
+                                    <p class="text-sm text-slate-600">${player.team}</p>
+                                    <p class="text-sm text-blue-600 font-medium mt-1">Form: ${player.form}</p>
+                                    <p class="text-sm text-purple-600 font-medium">FD Index: ${player.fdIndex.toFixed(2)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') :
+                    '<p class="text-slate-600">No suggestions available</p>';
+            });
+        }
 
         function populateTransferData(data) {
             const transfersInDiv = document.getElementById('mostTransferredIn');
