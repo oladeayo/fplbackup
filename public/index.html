@@ -217,75 +217,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
 
         <!-- Transfer Trends Card -->
-        <div id="transferHistory" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
+        <div id="transferTrends" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
             <h2 class="text-2xl font-bold text-slate-800 mb-8">
-                <i class="fas fa-exchange-alt mr-2 text-blue-500"></i>Transfer History
+                <i class="fas fa-exchange-alt mr-2 text-blue-500"></i>Transfer Trends
             </h2>
             <div class="space-y-8">
-                <!-- Players Transferred In -->
+                <!-- Most Transferred In -->
                 <div>
                     <h3 class="text-xl font-semibold mb-4 text-green-600">
-                        <i class="fas fa-arrow-right mr-2"></i>Players Transferred In
+                        <i class="fas fa-arrow-right mr-2"></i>Most Transferred In
                     </h3>
-                    <div id="transferredInPlayers" class="scroll-container">
+                    <div id="mostTransferredIn" class="scroll-container">
                         <!-- Populated by JavaScript -->
                     </div>
                 </div>
-                <!-- Players Transferred Out -->
+                <!-- Most Transferred Out -->
                 <div>
                     <h3 class="text-xl font-semibold mb-4 text-red-600">
-                        <i class="fas fa-arrow-left mr-2"></i>Players Transferred Out
+                        <i class="fas fa-arrow-left mr-2"></i>Most Transferred Out
                     </h3>
-                    <div id="transferredOutPlayers" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- FD Index Suggestions Card -->
-        <div id="fdIndexSuggestions" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">
-                <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>Form/Difficulty Index Suggestions
-            </h2>
-            <div class="space-y-8">
-                <!-- GKP Suggestions -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-amber-600">
-                        <i class="fas fa-hands mr-2"></i>Goalkeeper Suggestions
-                        <span class="text-sm font-normal">(Form ÷ Fixture Difficulty)</span>
-                    </h3>
-                    <div id="GKPSuggestions" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-                <!-- DEF Suggestions -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-blue-600">
-                        <i class="fas fa-shield mr-2"></i>Defender Suggestions
-                        <span class="text-sm font-normal">(Form ÷ Fixture Difficulty)</span>
-                    </h3>
-                    <div id="DEFSuggestions" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-                <!-- MID Suggestions -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-emerald-600">
-                        <i class="fas fa-running mr-2"></i>Midfielder Suggestions
-                        <span class="text-sm font-normal">(Form ÷ Fixture Difficulty)</span>
-                    </h3>
-                    <div id="MIDSuggestions" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-                <!-- FWD Suggestions -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-rose-600">
-                        <i class="fas fa-futbol mr-2"></i>Forward Suggestions
-                        <span class="text-sm font-normal">(Form ÷ Fixture Difficulty)</span>
-                    </h3>
-                    <div id="FWDSuggestions" class="scroll-container">
+                    <div id="mostTransferredOut" class="scroll-container">
                         <!-- Populated by JavaScript -->
                     </div>
                 </div>
@@ -375,65 +326,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // Show cards and populate data
                 document.getElementById('suspensionRisk').classList.remove('hidden');
                 document.getElementById('transferTrends').classList.remove('hidden');
-                document.getElementById('fdIndexSuggestions').classList.remove('hidden');
                 populateSuspensionData({ suspendedPlayers, playersOn4Yellows });
-                populateTransferData({ mostTransferredIn: top10TransfersIn, mostTransferredOut: top10TransferredOut });
-                populateFDIndexData(data);
+                populateTransferData({ mostTransferredIn: top10TransfersIn, mostTransferredOut: top10TransfersOut });
             } catch (error) {
                 console.error("Error loading data:", error);
             }
         });
-
-        function populateFDIndexData(fdIndexData) {
-            const positions = ['GKP', 'DEF', 'MID', 'FWD'];
-            
-            positions.forEach(pos => {
-                const containerDiv = document.getElementById(`${pos.toLowerCase()}Suggestions`);
-                const players = fdIndexData[pos];
-                
-                containerDiv.innerHTML = players.length ? 
-                    players.map(player => `
-                        <div class="player-card bg-white/50 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300">
-                            <div class="flex items-center space-x-4">
-                                <img 
-                                    src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photoId}.png" 
-                                    alt="${player.name}"
-                                    class="w-16 h-20 object-cover rounded-lg"
-                                    onerror="this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png'"
-                                >
-                                <div>
-                                    <h4 class="font-semibold text-slate-800">${player.name}</h4>
-                                    <p class="text-sm text-slate-600">${player.team}</p>
-                                    <p class="text-sm text-blue-600 font-medium mt-1">Form: ${player.form}</p>
-                                    <p class="text-sm text-orange-600 font-medium">Fixture Difficulty: ${player.fixturesDifficulty}</p>
-                                    <p class="text-sm text-purple-600 font-medium">FD Index: ${player.fdIndex.toFixed(2)}</p>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('') :
-                    '<p class="text-slate-600">No suggestions available</p>';
-            });
-        }
 
         function populateTransferData(data) {
             const transfersInDiv = document.getElementById('mostTransferredIn');
             const transfersOutDiv = document.getElementById('mostTransferredOut');
 
             // Helper function to create transfer card
-            const createTransferCard = (transfer, type) => `
+            const createTransferCard = (player, type) => `
                 <div class="player-card bg-white/50 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300">
                     <div class="flex items-center space-x-4">
                         <img 
-                            src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${transfer.element_in_photo || transfer.element_out_photo}.png" 
-                            alt="${transfer.element_in_name || transfer.element_out_name}"
+                            src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photoId}.png" 
+                            alt="${player.name}"
                             class="w-16 h-20 object-cover rounded-lg"
                             onerror="this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png'"
                         >
                         <div>
-                            <h4 class="font-semibold text-slate-800">${transfer.element_in_name || transfer.element_out_name}</h4>
-                            <p class="text-sm text-slate-600">${transfer.element_in_team || transfer.element_out_team}</p>
+                            <h4 class="font-semibold text-slate-800">${player.name}</h4>
+                            <p class="text-sm text-slate-600">${player.team}</p>
                             <p class="text-sm ${type === 'in' ? 'text-green-600' : 'text-red-600'} font-medium mt-1">
-                                Transfer ${type === 'in' ? 'In' : 'Out'} - GW${transfer.event}
+                                ${type === 'in' ? 'Transfers In' : 'Transfers Out'}: ${player.transfers.toLocaleString()}
                             </p>
                         </div>
                     </div>
@@ -441,13 +359,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             `;
 
             // Populate transfers in
-            transfersInDiv.innerHTML = data.transfers.length ? 
-                data.transfers.map(transfer => createTransferCard(transfer, 'in')).join('') :
+            transfersInDiv.innerHTML = data.mostTransferredIn.length ? 
+                data.mostTransferredIn.map(player => createTransferCard(player, 'in')).join('') :
                 '<p class="text-slate-600">No transfer data available</p>';
 
-            // Populate transfers out  
-            transfersOutDiv.innerHTML = data.transfers.length ?
-                data.transfers.map(transfer => createTransferCard(transfer, 'out')).join('') :
+            // Populate transfers out
+            transfersOutDiv.innerHTML = data.mostTransferredOut.length ?
+                data.mostTransferredOut.map(player => createTransferCard(player, 'out')).join('') :
                 '<p class="text-slate-600">No transfer data available</p>';
         }
 
