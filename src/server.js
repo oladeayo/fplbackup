@@ -61,7 +61,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const playerStats = {};
     const positionPoints = { GKP: {}, DEF: {}, MID: {}, FWD: {} };
 
-    // Get suspension watchlist
+    // Get suspension watchlist - moved to a separate endpoint
     const suspensionWatchlist = playerData.elements
       .map(player => {
         const yellowCards = player.yellow_cards;
@@ -143,8 +143,6 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       });
     }
 
-    // ... Rest of the gameweek processing code remains the same ...
-
     // Prepare the complete analysis object
     const analysis = {
       managerInfo: {
@@ -178,13 +176,63 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       weeklyPoints,
       weeklyRanks,
       currentTeam,
-      suspensionWatchlist // Add the suspension watchlist to the response
+      suspensionWatchlist
     };
 
     res.json(analysis);
   } catch (error) {
     console.error('Error analyzing manager:', error);
     res.status(500).json({ error: 'Failed to analyze manager' });
+  }
+});
+
+// Add new endpoint for suspension watchlist that loads immediately
+app.get('/api/suspension-watchlist', async (req, res) => {
+  try {
+    const playerDataResponse = await axios.get('https://fantasy.premierleague.com/api/bootstrap-static/');
+    const playerData = playerDataResponse.data;
+
+    const suspensionWatchlist = playerData.elements
+      .map(player => {
+        const yellowCards = player.yellow_cards;
+        const redCards = player.red_cards;
+        const team = playerData.teams.find(t => t.id === player.team);
+        
+        return {
+          id: player.id,
+          name: player.web_name,
+          photoId: player.code,
+          teamName: team.name,
+          teamShortName: team.short_name,
+          teamId: team.id,
+          yellowCards,
+          redCards,
+          totalCards: yellowCards + (redCards * 2),
+          cardsToSuspension: 5 - yellowCards
+        };
+      })
+      .filter(player => player.cardsToSuspension <= 2 && player.cardsToSuspension > 0)
+      .sort((a, b) => a.cardsToSuspension - b.cardsToSuspension)
+      .slice(0, 10);
+
+    // Get next 3 fixtures for suspension watchlist players
+    for (const player of suspensionWatchlist) {
+      const fixturesResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
+      player.nextFixtures = fixturesResponse.data.fixtures.slice(0, 3).map(fixture => {
+        const isHome = fixture.is_home;
+        const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h)).short_name;
+        return {
+          opponent,
+          isHome,
+          difficulty: fixture.difficulty
+        };
+      });
+    }
+
+    res.json(suspensionWatchlist);
+  } catch (error) {
+    console.error('Error fetching suspension watchlist:', error);
+    res.status(500).json({ error: 'Failed to fetch suspension watchlist' });
   }
 });
 
