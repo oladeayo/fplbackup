@@ -182,8 +182,14 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
 
         currentTeam.push({
           name: player.web_name,
+          team: playerData.teams[player.team - 1].name,
+          position: ["GKP", "DEF", "MID", "FWD"][player.element_type - 1],
           nextFixtures,
-          last3GWPoints
+          last3GWPoints,
+          photoId: player.code,
+          isCaptain: pick.is_captain,
+          isViceCaptain: pick.is_vice_captain,
+          multiplier: pick.multiplier
         });
       }
     }
@@ -322,15 +328,25 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
         lowestRank: lowestRank.toLocaleString(),
         lowestRankGW
       },
-      playerStats: Object.values(playerStats).sort((a, b) => b.totalPointsActive - a.totalPointsActive),
+      squadPerformance: {
+        currentTeam,
+        playerStats: Object.values(playerStats).sort((a, b) => b.totalPointsActive - a.totalPointsActive)
+      },
       positionSummary: Object.entries(positionPoints).map(([position, players]) => ({
         position,
         totalPoints: Object.values(players).reduce((sum, player) => sum + player.points, 0),
         players: Object.values(players).sort((a, b) => b.points - a.points),
         highestScorer: highestScorers[position]
       })),
-      weeklyPoints,
-      weeklyRanks,
+      weeklyPerformance: {
+        weeklyPoints,
+        weeklyRanks,
+        last3GWs: historyData.current.slice(-3).map(gw => ({
+          gameweek: gw.event,
+          points: gw.points,
+          rank: gw.overall_rank
+        }))
+      },
       currentTeam,
       suspendedPlayers,
       playersOn4Yellows,
