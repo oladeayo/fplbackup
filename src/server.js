@@ -55,10 +55,20 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const suspendedPlayers = [];
     const playersOn4Yellows = [];
 
+    // Fetch all player fixtures in parallel
+    const playerFixturesPromises = playerData.elements.map(player => {
+      if (player.status === 'r' || player.status === 's' || player.yellow_cards === 4) {
+        return axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
+      }
+      return null;
+    }).filter(Boolean);
+
+    const playerFixturesResponses = await Promise.all(playerFixturesPromises);
+    let fixturesIndex = 0;
+
     for (const player of playerData.elements) {
       if (player.status === 'r' || player.status === 's') {
-        // Get next 3 fixtures for suspended player
-        const fixturesResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
+        const fixturesResponse = playerFixturesResponses[fixturesIndex++];
         const nextFixtures = fixturesResponse.data.fixtures.slice(0, 3).map(fixture => {
           const isHome = fixture.is_home;
           const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h)).short_name;
@@ -79,8 +89,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       }
       
       if (player.yellow_cards === 4) {
-        // Get next 3 fixtures for players on 4 yellows
-        const fixturesResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
+        const fixturesResponse = playerFixturesResponses[fixturesIndex++];
         const nextFixtures = fixturesResponse.data.fixtures.slice(0, 3).map(fixture => {
           const isHome = fixture.is_home;
           const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h)).short_name;
@@ -130,11 +139,21 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${currentGameweek}/picks/`);
     const managerPicks = managerPicksResponse.data.picks;
 
+    // Fetch all current team fixtures in parallel
+    const currentTeamFixturesPromises = managerPicks.map(pick => {
+      const player = playerData.elements.find(p => p.id === pick.element);
+      if (!player) return null;
+      return axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
+    }).filter(Boolean);
+
+    const currentTeamFixturesResponses = await Promise.all(currentTeamFixturesPromises);
+    let currentTeamIndex = 0;
+
     for (const pick of managerPicks) {
       const player = playerData.elements.find(p => p.id === pick.element);
       if (!player) continue;
 
-      const fixturesResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
+      const fixturesResponse = currentTeamFixturesResponses[currentTeamIndex++];
       const nextFixtures = fixturesResponse.data.fixtures.slice(0, 5).map(fixture => {
         const isHome = fixture.is_home;
         const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h)).short_name;
@@ -155,9 +174,15 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       });
     }
 
+    // Fetch all gameweek data in parallel
+    const gameweekPromises = [];
     for (let gw = 1; gw <= currentGameweek; gw++) {
-      const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${gw}/picks/`);
-      const managerPicksData = managerPicksResponse.data;
+      gameweekPromises.push(axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${gw}/picks/`));
+    }
+    const gameweekResponses = await Promise.all(gameweekPromises);
+
+    for (let gw = 1; gw <= currentGameweek; gw++) {
+      const managerPicksData = gameweekResponses[gw - 1].data;
       const managerPicks = managerPicksData.picks;
 
       const isBenchBoost = managerPicksData.active_chip === "bboost";
@@ -165,13 +190,19 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
 
       let gwPoints = 0;
       
-      for (const pick of managerPicks) {
+      // Fetch all player histories in parallel for this gameweek
+      const playerHistoryPromises = managerPicks.map(pick => {
+        return axios.get(`https://fantasy.premierleague.com/api/element-summary/${pick.element}/`);
+      });
+      const playerHistoryResponses = await Promise.all(playerHistoryPromises);
+      
+      for (let i = 0; i < managerPicks.length; i++) {
+        const pick = managerPicks[i];
         const playerId = pick.element;
         const player = playerData.elements.find(p => p.id == playerId);
         if (!player) continue;
 
-        const playerHistoryResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
-        const playerHistory = playerHistoryResponse.data.history;
+        const playerHistory = playerHistoryResponses[i].data.history;
         const gameweekHistory = playerHistory.find(history => history.round === gw);
         const pointsThisWeek = gameweekHistory ? gameweekHistory.total_points : 0;
 
