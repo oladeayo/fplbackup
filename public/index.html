@@ -84,78 +84,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .player-image {
             padding-right: 1.5rem;
         }
-        .suspension-card {
-            position: relative;
-            width: 200px;
-            height: 280px;
-            flex-shrink: 0;
-            margin-right: 1rem;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0.95));
-            border: 1px solid rgba(255,255,255,0.3);
-            backdrop-filter: blur(10px);
-            transition: transform 0.3s ease;
-        }
-        .suspension-card:hover {
-            transform: translateY(-5px);
-        }
-        .suspension-overlay {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #fbbf24;
-            color: #000;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-weight: bold;
-            z-index: 20;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            box-shadow: 0 4px 6px rgba(251, 191, 36, 0.3);
-        }
-        .suspension-scroll {
-            display: flex;
-            overflow-x: auto;
-            padding: 1rem;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-        .suspension-scroll::-webkit-scrollbar {
-            display: none;
-        }
-        .player-name {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            width: 80%;
-        }
-        .fixtures-list {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-        }
-        .fixture-item {
-            background: rgba(255,255,255,0.9);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen custom-scrollbar">
@@ -177,19 +105,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <i class="fas fa-chart-line mr-2"></i>
                 Unlock insights into your FPL team performance
             </p>
-        </div>
-
-        <!-- Suspension Watchlist Card -->
-        <div class="glass-effect rounded-3xl shadow-xl p-8 card-hover mb-16">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">
-                <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
-                Suspension Watchlist
-            </h2>
-            <div class="suspension-scroll">
-                <div id="suspensionWatchlist" class="flex">
-                    <!-- Populated by JavaScript -->
-                </div>
-            </div>
         </div>
 
         <!-- Input Section -->
@@ -262,11 +177,38 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
         </div>
 
+        <!-- Suspension Risk Card -->
+        <div id="suspensionRisk" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                <i class="fas fa-exclamation-triangle mr-2 text-yellow-500"></i>Suspension Risk & Banned Players
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Suspended Players -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-red-600">
+                        <i class="fas fa-ban mr-2"></i>Suspended Players
+                    </h3>
+                    <div id="suspendedPlayers" class="space-y-4">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                <!-- Players on 4 Yellow Cards -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-yellow-600">
+                        <i class="fas fa-card mr-2"></i>On 4 Yellow Cards
+                    </h3>
+                    <div id="yellowCardRisk" class="space-y-4">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Share Button -->
         <div class="flex justify-center mt-16">
             <button onclick="shareApp()" 
                     class="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-10 rounded-2xl flex items-center gap-3 transition duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
-                <i class="fas fa-share-alt text-xl"></i> Share App
+                <i class="fas fa-share-alt text-xl"></i> Share
             </button>
         </div>
 
@@ -285,41 +227,59 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let rankChart = null;
         let last3GWsChart = null;
 
-        // Fetch suspension watchlist data when page loads
+        // Load suspension data when page loads
         window.addEventListener('DOMContentLoaded', async () => {
             try {
-                const response = await fetch('/api/suspension-watchlist');
-                if (!response.ok) throw new Error("Failed to fetch suspension data");
+                const response = await fetch('/api/suspension-data');
+                if (!response.ok) throw new Error("Could not fetch suspension data");
                 const data = await response.json();
-                populateSuspensionWatchlist(data);
+                populateSuspensionData(data);
             } catch (error) {
-                console.error("Error fetching suspension data:", error);
+                console.error("Error loading suspension data:", error);
             }
         });
 
-        function populateSuspensionWatchlist(players) {
-            const watchlistDiv = document.getElementById('suspensionWatchlist');
-            watchlistDiv.innerHTML = players.map(player => `
-                <div class="suspension-card glass-effect rounded-2xl overflow-hidden shadow-lg">
-                    <div class="suspension-overlay">
-                        <i class="fas fa-square text-yellow-400"></i>
-                        ${player.yellowCards}
-                    </div>
-                    <img 
-                        src="https://resources.premierleague.com/premierleague/photos/players/250x250/p${player.photoId}.png"
-                        alt="${player.name}"
-                        class="w-full h-48 object-cover"
-                        onerror="this.src='https://resources.premierleague.com/premierleague/photos/players/250x250/Photo-Missing.png'"
-                    >
-                    <div class="player-name">${player.name}</div>
-                    <div class="fixtures-list">
-                        ${player.nextFixtures.slice(0,3).map(f => 
-                            `<div class="fixture-item">${f.opponent}(${f.isHome ? 'H' : 'A'})</div>`
-                        ).join('')}
+        function populateSuspensionData(data) {
+            const suspendedPlayersDiv = document.getElementById('suspendedPlayers');
+            const yellowCardRiskDiv = document.getElementById('yellowCardRisk');
+
+            // Helper function to create player card
+            const createPlayerCard = (player) => `
+                <div class="bg-white/50 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center space-x-4">
+                        <img 
+                            src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photoId}.png" 
+                            alt="${player.name}"
+                            class="w-16 h-20 object-cover rounded-lg"
+                            onerror="this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png'"
+                        >
+                        <div>
+                            <h4 class="font-semibold text-slate-800">${player.name}</h4>
+                            <p class="text-sm text-slate-600">${player.team}</p>
+                            <div class="flex space-x-2 mt-2">
+                                ${player.nextThreeFixtures.map(fixture => `
+                                    <div style="${getFDRColor(fixture.difficulty)}" 
+                                         class="text-xs rounded-md p-1 text-white">
+                                        ${fixture.opponent} (${fixture.isHome ? 'H' : 'A'})
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+
+            // Populate suspended players
+            suspendedPlayersDiv.innerHTML = data.suspendedPlayers.length ? 
+                data.suspendedPlayers.map(createPlayerCard).join('') :
+                '<p class="text-slate-600">No players currently suspended</p>';
+
+            // Populate players on 4 yellow cards
+            yellowCardRiskDiv.innerHTML = data.playersOn4Yellows.length ?
+                data.playersOn4Yellows.map(createPlayerCard).join('') :
+                '<p class="text-slate-600">No players currently on 4 yellow cards</p>';
         }
+
         async function analyzeManager() {
             const managerId = document.getElementById('managerId').value;
             const resultsDiv = document.getElementById('results');
@@ -464,6 +424,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 }
             });
         }
+
         function getFDRColor(difficulty) {
             const colors = {
                 1: '#22c55e',  // Green
