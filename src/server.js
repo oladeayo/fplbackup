@@ -56,9 +56,6 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const playersOn4Yellows = [];
     const mostTransferredIn = [];
     const mostTransferredOut = [];
-    const fdIndexSuggestions = {
-      GKP: [], DEF: [], MID: [], FWD: []
-    };
 
     // Fetch fixtures for all players in parallel
     const playerFixturesPromises = playerData.elements.map(player => {
@@ -67,7 +64,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
 
     const playerFixturesResponses = await Promise.all(playerFixturesPromises);
 
-    // Process FD Index for all players
+    // Process players
     playerData.elements.forEach((player, index) => {
       const fixturesResponse = playerFixturesResponses[index];
       const nextThreeFixtures = fixturesResponse.data.fixtures.slice(0, 3).map(fixture => {
@@ -78,18 +75,6 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
           isHome,
           difficulty: fixture.difficulty
         };
-      });
-
-      const fdIndex = player.form * (15 / (nextThreeFixtures.reduce((sum, f) => sum + f.difficulty, 0)));
-      const position = ["GKP", "DEF", "MID", "FWD"][player.element_type - 1];
-
-      fdIndexSuggestions[position].push({
-        name: player.web_name,
-        team: playerData.teams[player.team - 1].name,
-        photoId: player.code,
-        form: player.form,
-        fdIndex: fdIndex,
-        nextFixtures: nextThreeFixtures
       });
 
       // Process suspended and yellow card players
@@ -113,12 +98,6 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
         });
       }
     });
-
-    // Sort and limit FD Index suggestions by position
-    fdIndexSuggestions.GKP = fdIndexSuggestions.GKP.sort((a, b) => b.fdIndex - a.fdIndex).slice(0, 3);
-    fdIndexSuggestions.DEF = fdIndexSuggestions.DEF.sort((a, b) => b.fdIndex - a.fdIndex).slice(0, 4);
-    fdIndexSuggestions.MID = fdIndexSuggestions.MID.sort((a, b) => b.fdIndex - a.fdIndex).slice(0, 5);
-    fdIndexSuggestions.FWD = fdIndexSuggestions.FWD.sort((a, b) => b.fdIndex - a.fdIndex).slice(0, 4);
 
     // Process transfers data
     const transfersData = playerData.elements.map(player => ({
@@ -356,8 +335,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       suspendedPlayers,
       playersOn4Yellows,
       mostTransferredIn,
-      mostTransferredOut,
-      fdIndexSuggestions
+      mostTransferredOut
     };
 
     res.json(analysis);
