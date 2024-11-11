@@ -84,6 +84,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .player-image {
             padding-right: 1.5rem;
         }
+        .scroll-container {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 1rem;
+            -webkit-overflow-scrolling: touch;
+        }
+        .player-card {
+            display: inline-block;
+            margin-right: 1rem;
+            min-width: 300px;
+            vertical-align: top;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen custom-scrollbar">
@@ -182,13 +194,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <h2 class="text-2xl font-bold text-slate-800 mb-8">
                 <i class="fas fa-exclamation-triangle mr-2 text-yellow-500"></i>Suspension Risk & Banned Players
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-8">
                 <!-- Suspended Players -->
                 <div>
                     <h3 class="text-xl font-semibold mb-4 text-red-600">
                         <i class="fas fa-ban mr-2"></i>Suspended Players
                     </h3>
-                    <div id="suspendedPlayers" class="space-y-4">
+                    <div id="suspendedPlayers" class="scroll-container">
                         <!-- Populated by JavaScript -->
                     </div>
                 </div>
@@ -197,7 +209,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <h3 class="text-xl font-semibold mb-4 text-yellow-600">
                         <i class="fas fa-card mr-2"></i>On 4 Yellow Cards
                     </h3>
-                    <div id="yellowCardRisk" class="space-y-4">
+                    <div id="yellowCardRisk" class="scroll-container">
                         <!-- Populated by JavaScript -->
                     </div>
                 </div>
@@ -245,6 +257,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             name: player.web_name,
                             team: team.name,
                             photoId: player.code,
+                            suspendedMatches: player.suspended_matches || 1,
                             nextThreeFixtures: [] // You can add fixture data if needed
                         });
                     }
@@ -253,6 +266,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             name: player.web_name,
                             team: team.name,
                             photoId: player.code,
+                            yellowCards: player.yellow_cards,
                             nextThreeFixtures: [] // You can add fixture data if needed
                         });
                     }
@@ -271,8 +285,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const yellowCardRiskDiv = document.getElementById('yellowCardRisk');
 
             // Helper function to create player card
-            const createPlayerCard = (player) => `
-                <div class="bg-white/50 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300">
+            const createSuspendedPlayerCard = (player) => `
+                <div class="player-card bg-white/50 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300">
                     <div class="flex items-center space-x-4">
                         <img 
                             src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photoId}.png" 
@@ -283,6 +297,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <div>
                             <h4 class="font-semibold text-slate-800">${player.name}</h4>
                             <p class="text-sm text-slate-600">${player.team}</p>
+                            <p class="text-sm text-red-600 font-medium mt-1">Suspended for ${player.suspendedMatches} match${player.suspendedMatches > 1 ? 'es' : ''}</p>
+                            <div class="flex space-x-2 mt-2">
+                                ${player.nextThreeFixtures?.map(fixture => `
+                                    <div style="${getFDRColor(fixture.difficulty)}" 
+                                         class="text-xs rounded-md p-1 text-white">
+                                        ${fixture.opponent} (${fixture.isHome ? 'H' : 'A'})
+                                    </div>
+                                `).join('') || ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const createYellowCardPlayerCard = (player) => `
+                <div class="player-card bg-white/50 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center space-x-4">
+                        <img 
+                            src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photoId}.png" 
+                            alt="${player.name}"
+                            class="w-16 h-20 object-cover rounded-lg"
+                            onerror="this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png'"
+                        >
+                        <div>
+                            <h4 class="font-semibold text-slate-800">${player.name}</h4>
+                            <p class="text-sm text-slate-600">${player.team}</p>
+                            <p class="text-sm text-yellow-600 font-medium mt-1">
+                                <i class="fas fa-square text-yellow-400"></i> ${player.yellowCards} Yellow Cards
+                            </p>
                             <div class="flex space-x-2 mt-2">
                                 ${player.nextThreeFixtures?.map(fixture => `
                                     <div style="${getFDRColor(fixture.difficulty)}" 
@@ -298,12 +341,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             // Populate suspended players
             suspendedPlayersDiv.innerHTML = data.suspendedPlayers.length ? 
-                data.suspendedPlayers.map(createPlayerCard).join('') :
+                data.suspendedPlayers.map(createSuspendedPlayerCard).join('') :
                 '<p class="text-slate-600">No players currently suspended</p>';
 
             // Populate players on 4 yellow cards
             yellowCardRiskDiv.innerHTML = data.playersOn4Yellows.length ?
-                data.playersOn4Yellows.map(createPlayerCard).join('') :
+                data.playersOn4Yellows.map(createYellowCardPlayerCard).join('') :
                 '<p class="text-slate-600">No players currently on 4 yellow cards</p>';
         }
 
