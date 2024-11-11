@@ -136,6 +136,37 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- Results Section -->
         <div id="results" class="max-w-7xl mx-auto space-y-10"></div>
 
+        <!-- FD Index Card -->
+        <div id="fdIndex" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>Transfer Suggestions (FD Index)
+            </h2>
+            <p class="text-slate-600 mb-6">Recommendations based on FD Index (Player Form/Fixtures Difficulty Rating)</p>
+            <div class="space-y-8">
+                <!-- Content populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Suspension Risk Card -->
+        <div id="suspensionRisk" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                <i class="fas fa-exclamation-triangle mr-2 text-yellow-500"></i>Suspension Risk & Banned Players
+            </h2>
+            <div class="space-y-8">
+                <!-- Content populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Transfer Trends Card -->
+        <div id="transferTrends" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                <i class="fas fa-exchange-alt mr-2 text-blue-500"></i>Transfer Trends
+            </h2>
+            <div class="space-y-8">
+                <!-- Content populated by JavaScript -->
+            </div>
+        </div>
+
         <!-- Position Summary Card -->
         <div id="positionSummary" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 hidden card-hover">
             <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-users-viewfinder mr-2"></i>Position Summary</h2>
@@ -186,106 +217,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <h2 class="text-2xl font-bold text-slate-800 mb-8"><i class="fas fa-chart-bar mr-2"></i>Last 3 Gameweeks Performance</h2>
             <div class="relative h-[400px]">
                 <canvas id="last3GWsChart"></canvas>
-            </div>
-        </div>
-
-        <!-- FD Index Card -->
-        <div id="fdIndex" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">
-                <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>Transfer Suggestions (FD Index)
-            </h2>
-            <p class="text-slate-600 mb-6">Recommendations based on FD Index (Player Form/Fixtures Difficulty Rating)</p>
-            <div class="space-y-8">
-                <!-- Goalkeepers -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-blue-600">
-                        <i class="fas fa-hands mr-2"></i>Top 3 Goalkeepers
-                    </h3>
-                    <div id="topGKP" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-                <!-- Defenders -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-green-600">
-                        <i class="fas fa-shield-alt mr-2"></i>Top 4 Defenders
-                    </h3>
-                    <div id="topDEF" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-                <!-- Midfielders -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-purple-600">
-                        <i class="fas fa-running mr-2"></i>Top 5 Midfielders
-                    </h3>
-                    <div id="topMID" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-                <!-- Forwards -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-red-600">
-                        <i class="fas fa-futbol mr-2"></i>Top 4 Forwards
-                    </h3>
-                    <div id="topFWD" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Suspension Risk Card -->
-        <div id="suspensionRisk" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">
-                <i class="fas fa-exclamation-triangle mr-2 text-yellow-500"></i>Suspension Risk & Banned Players
-            </h2>
-            <div class="space-y-8">
-                <!-- Suspended Players -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-red-600">
-                        <i class="fas fa-ban mr-2"></i>Suspended Players
-                    </h3>
-                    <div id="suspendedPlayers" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-                <!-- Players on 4 Yellow Cards -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-yellow-600">
-                        <i class="fas fa-card mr-2"></i>On 4 Yellow Cards
-                    </h3>
-                    <div id="yellowCardRisk" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Transfer Trends Card -->
-        <div id="transferTrends" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">
-                <i class="fas fa-exchange-alt mr-2 text-blue-500"></i>Transfer Trends
-            </h2>
-            <div class="space-y-8">
-                <!-- Most Transferred In -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-green-600">
-                        <i class="fas fa-arrow-right mr-2"></i>Most Transferred In
-                    </h3>
-                    <div id="mostTransferredIn" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-                <!-- Most Transferred Out -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-red-600">
-                        <i class="fas fa-arrow-left mr-2"></i>Most Transferred Out
-                    </h3>
-                    <div id="mostTransferredOut" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -406,10 +337,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const top10TransfersIn = mostTransferredIn.slice(0, 10);
                 const top10TransfersOut = mostTransferredOut.slice(0, 10);
 
-                // Show cards and populate data
-                document.getElementById('fdIndex').classList.remove('hidden');
-                document.getElementById('suspensionRisk').classList.remove('hidden');
-                document.getElementById('transferTrends').classList.remove('hidden');
+                // Populate data for cards that show immediately
                 populateFDIndexData(topFDPlayers);
                 populateSuspensionData({ suspendedPlayers, playersOn4Yellows });
                 populateTransferData({ mostTransferredIn: top10TransfersIn, mostTransferredOut: top10TransfersOut });
@@ -418,6 +346,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         });
 
+        
         function populateFDIndexData(data) {
             const fdIndexDiv = document.getElementById('fdIndex');
             const positions = ['GKP', 'DEF', 'MID', 'FWD'];
