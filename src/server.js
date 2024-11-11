@@ -55,6 +55,15 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const suspendedPlayers = [];
     const playersOn4Yellows = [];
 
+    // FDR colors mapping
+    const fdrColors = {
+      1: '#22c55e',  // Green
+      2: '#84cc16',  // Light Green
+      3: '#cbd5e1',  // Gray
+      4: '#f97316',  // Orange
+      5: '#ef4444'   // Red
+    };
+
     // Fetch all player fixtures in parallel
     const playerFixturesPromises = playerData.elements.map(player => {
       if (player.status === 'r' || player.status === 's' || player.yellow_cards === 4) {
@@ -69,22 +78,23 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     for (const player of playerData.elements) {
       if (player.status === 'r' || player.status === 's') {
         const fixturesResponse = playerFixturesResponses[fixturesIndex++];
-        const nextFixtures = fixturesResponse.data.fixtures.slice(0, 3).map(fixture => {
-          const isHome = fixture.is_home;
-          const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h)).short_name;
-          return {
-            opponent,
-            isHome,
-            difficulty: fixture.difficulty
-          };
-        });
-
+        // Get the next fixture they'll miss due to suspension
+        const nextFixture = fixturesResponse.data.fixtures[0];
+        const isHome = nextFixture.is_home;
+        const opponent = playerData.teams.find(t => t.id === (isHome ? nextFixture.team_a : nextFixture.team_h)).short_name;
+        
         suspendedPlayers.push({
           name: player.web_name,
           team: playerData.teams[player.team - 1].name,
           photoId: player.code,
           status: player.status === 'r' ? 'Red Card' : 'Suspended',
-          nextFixtures
+          missedFixture: {
+            opponent,
+            isHome,
+            difficulty: nextFixture.difficulty,
+            event: nextFixture.event,
+            fdrColor: fdrColors[nextFixture.difficulty]
+          }
         });
       }
       
@@ -96,7 +106,9 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
           return {
             opponent,
             isHome,
-            difficulty: fixture.difficulty
+            difficulty: fixture.difficulty,
+            event: fixture.event,
+            fdrColor: fdrColors[fixture.difficulty]
           };
         });
 
@@ -160,7 +172,8 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
         return {
           opponent,
           isHome,
-          difficulty: fixture.difficulty
+          difficulty: fixture.difficulty,
+          fdrColor: fdrColors[fixture.difficulty]
         };
       });
 
