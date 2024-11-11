@@ -56,17 +56,69 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const playersOn4Yellows = [];
     const mostTransferredIn = [];
     const mostTransferredOut = [];
+    const fdIndexSuggestions = {
+      GKP: [], DEF: [], MID: [], FWD: []
+    };
 
-    // Fetch all player fixtures in parallel
+    // Fetch fixtures for all players in parallel
     const playerFixturesPromises = playerData.elements.map(player => {
-      if (player.status === 'r' || player.status === 's' || player.yellow_cards === 4) {
-        return axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
-      }
-      return null;
-    }).filter(Boolean);
+      return axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
+    });
 
     const playerFixturesResponses = await Promise.all(playerFixturesPromises);
-    let fixturesIndex = 0;
+
+    // Process FD Index for all players
+    playerData.elements.forEach((player, index) => {
+      const fixturesResponse = playerFixturesResponses[index];
+      const nextThreeFixtures = fixturesResponse.data.fixtures.slice(0, 3).map(fixture => {
+        const isHome = fixture.is_home;
+        const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h)).short_name;
+        return {
+          opponent,
+          isHome,
+          difficulty: fixture.difficulty
+        };
+      });
+
+      const fdIndex = player.form * (15 / (nextThreeFixtures.reduce((sum, f) => sum + f.difficulty, 0)));
+      const position = ["GKP", "DEF", "MID", "FWD"][player.element_type - 1];
+
+      fdIndexSuggestions[position].push({
+        name: player.web_name,
+        team: playerData.teams[player.team - 1].name,
+        photoId: player.code,
+        form: player.form,
+        fdIndex: fdIndex,
+        nextFixtures: nextThreeFixtures
+      });
+
+      // Process suspended and yellow card players
+      if (player.status === 'r' || player.status === 's') {
+        suspendedPlayers.push({
+          name: player.web_name,
+          team: playerData.teams[player.team - 1].name,
+          photoId: player.code,
+          status: player.status === 'r' ? 'Red Card' : 'Suspended',
+          nextFixtures: nextThreeFixtures
+        });
+      }
+      
+      if (player.yellow_cards === 4) {
+        playersOn4Yellows.push({
+          name: player.web_name,
+          team: playerData.teams[player.team - 1].name,
+          photoId: player.code,
+          yellowCards: player.yellow_cards,
+          nextFixtures: nextThreeFixtures
+        });
+      }
+    });
+
+    // Sort and limit FD Index suggestions by position
+    fdIndexSuggestions.GKP = fdIndexSuggestions.GKP.sort((a, b) => b.fdIndex - a.fdIndex).slice(0, 3);
+    fdIndexSuggestions.DEF = fdIndexSuggestions.DEF.sort((a, b) => b.fdIndex - a.fdIndex).slice(0, 4);
+    fdIndexSuggestions.MID = fdIndexSuggestions.MID.sort((a, b) => b.fdIndex - a.fdIndex).slice(0, 5);
+    fdIndexSuggestions.FWD = fdIndexSuggestions.FWD.sort((a, b) => b.fdIndex - a.fdIndex).slice(0, 4);
 
     // Process transfers data
     const transfersData = playerData.elements.map(player => ({
@@ -77,7 +129,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       transfersOut: player.transfers_out_event
     }));
 
-    // Get top 10 transfers in
+    // Get top 10 transfers in/out
     mostTransferredIn.push(...transfersData
       .sort((a, b) => b.transfersIn - a.transfersIn)
       .slice(0, 10)
@@ -87,7 +139,6 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       }))
     );
 
-    // Get top 10 transfers out
     mostTransferredOut.push(...transfersData
       .sort((a, b) => b.transfersOut - a.transfersOut)
       .slice(0, 10)
@@ -96,50 +147,6 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
         transfers: player.transfersOut
       }))
     );
-
-    for (const player of playerData.elements) {
-      if (player.status === 'r' || player.status === 's') {
-        const fixturesResponse = playerFixturesResponses[fixturesIndex++];
-        const nextFixtures = fixturesResponse.data.fixtures.slice(0, 3).map(fixture => {
-          const isHome = fixture.is_home;
-          const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h)).short_name;
-          return {
-            opponent,
-            isHome,
-            difficulty: fixture.difficulty
-          };
-        });
-
-        suspendedPlayers.push({
-          name: player.web_name,
-          team: playerData.teams[player.team - 1].name,
-          photoId: player.code,
-          status: player.status === 'r' ? 'Red Card' : 'Suspended',
-          nextFixtures
-        });
-      }
-      
-      if (player.yellow_cards === 4) {
-        const fixturesResponse = playerFixturesResponses[fixturesIndex++];
-        const nextFixtures = fixturesResponse.data.fixtures.slice(0, 3).map(fixture => {
-          const isHome = fixture.is_home;
-          const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h)).short_name;
-          return {
-            opponent,
-            isHome,
-            difficulty: fixture.difficulty
-          };
-        });
-
-        playersOn4Yellows.push({
-          name: player.web_name,
-          team: playerData.teams[player.team - 1].name,
-          photoId: player.code,
-          yellowCards: player.yellow_cards,
-          nextFixtures
-        });
-      }
-    }
 
     const currentGameweek = playerData.events.find(event => event.is_current).id;
     const topManagerPoints = leagueData.standings.results[0].total;
@@ -170,39 +177,36 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${currentGameweek}/picks/`);
     const managerPicks = managerPicksResponse.data.picks;
 
-    // Fetch all current team fixtures in parallel
-    const currentTeamFixturesPromises = managerPicks.map(pick => {
-      const player = playerData.elements.find(p => p.id === pick.element);
-      if (!player) return null;
-      return axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
-    }).filter(Boolean);
-
-    const currentTeamFixturesResponses = await Promise.all(currentTeamFixturesPromises);
-    let currentTeamIndex = 0;
-
+    // Process current team
     for (const pick of managerPicks) {
       const player = playerData.elements.find(p => p.id === pick.element);
       if (!player) continue;
 
-      const fixturesResponse = currentTeamFixturesResponses[currentTeamIndex++];
-      const nextFixtures = fixturesResponse.data.fixtures.slice(0, 5).map(fixture => {
-        const isHome = fixture.is_home;
-        const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h)).short_name;
-        return {
-          opponent,
-          isHome,
-          difficulty: fixture.difficulty
-        };
-      });
+      const playerFixturesResponse = playerFixturesResponses.find(r => 
+        r.data.fixtures[0]?.element === player.id
+      );
+      
+      if (playerFixturesResponse) {
+        const nextFixtures = playerFixturesResponse.data.fixtures.slice(0, 5).map(fixture => {
+          const isHome = fixture.is_home;
+          const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h)).short_name;
+          return {
+            opponent,
+            isHome,
+            difficulty: fixture.difficulty
+          };
+        });
 
-      // Calculate points for last 3 gameweeks
-      const last3GWPoints = fixturesResponse.data.history.slice(-3).reduce((sum, game) => sum + game.total_points, 0);
+        // Calculate points for last 3 gameweeks
+        const last3GWPoints = playerFixturesResponse.data.history.slice(-3)
+          .reduce((sum, game) => sum + game.total_points, 0);
 
-      currentTeam.push({
-        name: player.web_name,
-        nextFixtures,
-        last3GWPoints
-      });
+        currentTeam.push({
+          name: player.web_name,
+          nextFixtures,
+          last3GWPoints
+        });
+      }
     }
 
     // Fetch all gameweek data in parallel
@@ -212,6 +216,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     }
     const gameweekResponses = await Promise.all(gameweekPromises);
 
+    // Process gameweek data
     for (let gw = 1; gw <= currentGameweek; gw++) {
       const managerPicksData = gameweekResponses[gw - 1].data;
       const managerPicks = managerPicksData.picks;
@@ -220,21 +225,19 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       const isTripleCaptain = managerPicksData.active_chip === "3xc";
 
       let gwPoints = 0;
-      
-      // Fetch all player histories in parallel for this gameweek
-      const playerHistoryPromises = managerPicks.map(pick => {
-        return axios.get(`https://fantasy.premierleague.com/api/element-summary/${pick.element}/`);
-      });
-      const playerHistoryResponses = await Promise.all(playerHistoryPromises);
-      
-      for (let i = 0; i < managerPicks.length; i++) {
-        const pick = managerPicks[i];
+
+      for (const pick of managerPicks) {
         const playerId = pick.element;
-        const player = playerData.elements.find(p => p.id == playerId);
+        const player = playerData.elements.find(p => p.id === playerId);
         if (!player) continue;
 
-        const playerHistory = playerHistoryResponses[i].data.history;
-        const gameweekHistory = playerHistory.find(history => history.round === gw);
+        const playerFixturesResponse = playerFixturesResponses.find(r => 
+          r.data.fixtures[0]?.element === playerId
+        );
+        
+        if (!playerFixturesResponse) continue;
+
+        const gameweekHistory = playerFixturesResponse.data.history.find(h => h.round === gw);
         const pointsThisWeek = gameweekHistory ? gameweekHistory.total_points : 0;
 
         if (!playerStats[playerId]) {
@@ -353,7 +356,8 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       suspendedPlayers,
       playersOn4Yellows,
       mostTransferredIn,
-      mostTransferredOut
+      mostTransferredOut,
+      fdIndexSuggestions
     };
 
     res.json(analysis);

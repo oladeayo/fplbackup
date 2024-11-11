@@ -189,6 +189,52 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
         </div>
 
+        <!-- FD Index Card -->
+        <div id="fdIndex" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>Transfer Suggestions (FD Index)
+            </h2>
+            <p class="text-slate-600 mb-6">Recommendations based on FD Index (Player Form/Fixtures Difficulty Rating)</p>
+            <div class="space-y-8">
+                <!-- Goalkeepers -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-blue-600">
+                        <i class="fas fa-hands mr-2"></i>Top 3 Goalkeepers
+                    </h3>
+                    <div id="topGKP" class="scroll-container">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                <!-- Defenders -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-green-600">
+                        <i class="fas fa-shield-alt mr-2"></i>Top 4 Defenders
+                    </h3>
+                    <div id="topDEF" class="scroll-container">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                <!-- Midfielders -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600">
+                        <i class="fas fa-running mr-2"></i>Top 5 Midfielders
+                    </h3>
+                    <div id="topMID" class="scroll-container">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                <!-- Forwards -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-red-600">
+                        <i class="fas fa-futbol mr-2"></i>Top 4 Forwards
+                    </h3>
+                    <div id="topFWD" class="scroll-container">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Suspension Risk Card -->
         <div id="suspensionRisk" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
             <h2 class="text-2xl font-bold text-slate-800 mb-8">
@@ -278,9 +324,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const playersOn4Yellows = [];
                 const mostTransferredIn = [];
                 const mostTransferredOut = [];
+                const fdIndexPlayers = {
+                    GKP: [],
+                    DEF: [], 
+                    MID: [],
+                    FWD: []
+                };
                 
                 data.elements.forEach(player => {
                     const team = data.teams.find(t => t.id === player.team);
+                    const position = data.element_types.find(t => t.id === player.element_type).singular_name_short;
+
+                    // Calculate FD Index based on form and next 3 fixtures
+                    const fdIndex = parseFloat(player.form) * (1/player.next_3_fixtures_difficulty_score);
+                    
+                    fdIndexPlayers[position].push({
+                        name: player.web_name,
+                        team: team.name,
+                        photoId: player.code,
+                        form: player.form,
+                        fdIndex: fdIndex,
+                        nextThreeFixtures: player.next_3_fixtures.map(f => ({
+                            opponent: data.teams.find(t => t.id === (f.is_home ? f.team_a : f.team_h)).short_name,
+                            isHome: f.is_home,
+                            difficulty: f.difficulty
+                        }))
+                    });
+
                     if (player.status === 'r' || player.status === 's') {
                         suspendedPlayers.push({
                             name: player.web_name,
@@ -316,6 +386,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     });
                 });
 
+                // Sort and slice by position for FD Index
+                fdIndexPlayers.GKP.sort((a, b) => b.fdIndex - a.fdIndex);
+                fdIndexPlayers.DEF.sort((a, b) => b.fdIndex - a.fdIndex);
+                fdIndexPlayers.MID.sort((a, b) => b.fdIndex - a.fdIndex);
+                fdIndexPlayers.FWD.sort((a, b) => b.fdIndex - a.fdIndex);
+
+                const topFDPlayers = {
+                    GKP: fdIndexPlayers.GKP.slice(0, 3),
+                    DEF: fdIndexPlayers.DEF.slice(0, 4),
+                    MID: fdIndexPlayers.MID.slice(0, 5),
+                    FWD: fdIndexPlayers.FWD.slice(0, 4)
+                };
+
                 // Sort and slice transfers data
                 mostTransferredIn.sort((a, b) => b.transfers - a.transfers);
                 mostTransferredOut.sort((a, b) => b.transfers - a.transfers);
@@ -324,14 +407,63 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const top10TransfersOut = mostTransferredOut.slice(0, 10);
 
                 // Show cards and populate data
+                document.getElementById('fdIndex').classList.remove('hidden');
                 document.getElementById('suspensionRisk').classList.remove('hidden');
                 document.getElementById('transferTrends').classList.remove('hidden');
+                populateFDIndexData(topFDPlayers);
                 populateSuspensionData({ suspendedPlayers, playersOn4Yellows });
                 populateTransferData({ mostTransferredIn: top10TransfersIn, mostTransferredOut: top10TransfersOut });
             } catch (error) {
                 console.error("Error loading data:", error);
             }
         });
+
+        function populateFDIndexData(data) {
+            const fdIndexDiv = document.getElementById('fdIndex');
+            const positions = ['GKP', 'DEF', 'MID', 'FWD'];
+            
+            const createFDCard = (player, position) => `
+                <div class="player-card bg-white/50 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center space-x-4">
+                        <img 
+                            src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photoId}.png" 
+                            alt="${player.name}"
+                            class="w-16 h-20 object-cover rounded-lg"
+                            onerror="this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png'"
+                        >
+                        <div>
+                            <h4 class="font-semibold text-slate-800">${player.name}</h4>
+                            <p class="text-sm text-slate-600">${player.team}</p>
+                            <p class="text-sm text-blue-600 font-medium mt-1">Form: ${player.form}</p>
+                            <div class="flex space-x-2 mt-2">
+                                ${player.nextThreeFixtures.map(fixture => `
+                                    <div style="${getFDRColor(fixture.difficulty)}" 
+                                         class="text-xs rounded-md p-1 text-white">
+                                        ${fixture.opponent} (${fixture.isHome ? 'H' : 'A'})
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            let html = '';
+            positions.forEach(pos => {
+                html += `
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-blue-600">
+                            <i class="fas fa-user-shield mr-2"></i>${pos}
+                        </h3>
+                        <div class="space-y-4">
+                            ${data[pos].map(player => createFDCard(player, pos)).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            fdIndexDiv.querySelector('.space-y-8').innerHTML = html;
+        }
 
         function populateTransferData(data) {
             const transfersInDiv = document.getElementById('mostTransferredIn');
