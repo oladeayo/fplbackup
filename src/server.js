@@ -54,6 +54,8 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     // Get suspended players and players on 4 yellows
     const suspendedPlayers = [];
     const playersOn4Yellows = [];
+    const mostTransferredIn = [];
+    const mostTransferredOut = [];
 
     // Fetch all player fixtures in parallel
     const playerFixturesPromises = playerData.elements.map(player => {
@@ -65,6 +67,35 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
 
     const playerFixturesResponses = await Promise.all(playerFixturesPromises);
     let fixturesIndex = 0;
+
+    // Process transfers data
+    const transfersData = playerData.elements.map(player => ({
+      name: player.web_name,
+      team: playerData.teams[player.team - 1].name,
+      photoId: player.code,
+      transfersIn: player.transfers_in_event,
+      transfersOut: player.transfers_out_event
+    }));
+
+    // Get top 10 transfers in
+    mostTransferredIn.push(...transfersData
+      .sort((a, b) => b.transfersIn - a.transfersIn)
+      .slice(0, 10)
+      .map(player => ({
+        ...player,
+        transfers: player.transfersIn
+      }))
+    );
+
+    // Get top 10 transfers out
+    mostTransferredOut.push(...transfersData
+      .sort((a, b) => b.transfersOut - a.transfersOut)
+      .slice(0, 10)
+      .map(player => ({
+        ...player,
+        transfers: player.transfersOut
+      }))
+    );
 
     for (const player of playerData.elements) {
       if (player.status === 'r' || player.status === 's') {
@@ -320,7 +351,9 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       weeklyRanks,
       currentTeam,
       suspendedPlayers,
-      playersOn4Yellows
+      playersOn4Yellows,
+      mostTransferredIn,
+      mostTransferredOut
     };
 
     res.json(analysis);

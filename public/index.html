@@ -216,6 +216,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
         </div>
 
+        <!-- Transfer Trends Card -->
+        <div id="transferTrends" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8">
+                <i class="fas fa-exchange-alt mr-2 text-blue-500"></i>Transfer Trends
+            </h2>
+            <div class="space-y-8">
+                <!-- Most Transferred In -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-green-600">
+                        <i class="fas fa-arrow-right mr-2"></i>Most Transferred In
+                    </h3>
+                    <div id="mostTransferredIn" class="scroll-container">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                <!-- Most Transferred Out -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-red-600">
+                        <i class="fas fa-arrow-left mr-2"></i>Most Transferred Out
+                    </h3>
+                    <div id="mostTransferredOut" class="scroll-container">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Share Button -->
         <div class="flex justify-center mt-16">
             <button onclick="shareApp()" 
@@ -249,6 +276,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // Process suspension data
                 const suspendedPlayers = [];
                 const playersOn4Yellows = [];
+                const mostTransferredIn = [];
+                const mostTransferredOut = [];
                 
                 data.elements.forEach(player => {
                     const team = data.teams.find(t => t.id === player.team);
@@ -270,15 +299,75 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             nextThreeFixtures: [] // You can add fixture data if needed
                         });
                     }
+
+                    // Process transfers data
+                    mostTransferredIn.push({
+                        name: player.web_name,
+                        team: team.name,
+                        photoId: player.code,
+                        transfers: player.transfers_in_event
+                    });
+
+                    mostTransferredOut.push({
+                        name: player.web_name,
+                        team: team.name,
+                        photoId: player.code,
+                        transfers: player.transfers_out_event
+                    });
                 });
 
-                // Show suspension risk card and populate data
+                // Sort and slice transfers data
+                mostTransferredIn.sort((a, b) => b.transfers - a.transfers);
+                mostTransferredOut.sort((a, b) => b.transfers - a.transfers);
+                
+                const top10TransfersIn = mostTransferredIn.slice(0, 10);
+                const top10TransfersOut = mostTransferredOut.slice(0, 10);
+
+                // Show cards and populate data
                 document.getElementById('suspensionRisk').classList.remove('hidden');
+                document.getElementById('transferTrends').classList.remove('hidden');
                 populateSuspensionData({ suspendedPlayers, playersOn4Yellows });
+                populateTransferData({ mostTransferredIn: top10TransfersIn, mostTransferredOut: top10TransfersOut });
             } catch (error) {
-                console.error("Error loading suspension data:", error);
+                console.error("Error loading data:", error);
             }
         });
+
+        function populateTransferData(data) {
+            const transfersInDiv = document.getElementById('mostTransferredIn');
+            const transfersOutDiv = document.getElementById('mostTransferredOut');
+
+            // Helper function to create transfer card
+            const createTransferCard = (player, type) => `
+                <div class="player-card bg-white/50 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center space-x-4">
+                        <img 
+                            src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photoId}.png" 
+                            alt="${player.name}"
+                            class="w-16 h-20 object-cover rounded-lg"
+                            onerror="this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png'"
+                        >
+                        <div>
+                            <h4 class="font-semibold text-slate-800">${player.name}</h4>
+                            <p class="text-sm text-slate-600">${player.team}</p>
+                            <p class="text-sm ${type === 'in' ? 'text-green-600' : 'text-red-600'} font-medium mt-1">
+                                ${type === 'in' ? 'Transfers In' : 'Transfers Out'}: ${player.transfers.toLocaleString()}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Populate transfers in
+            transfersInDiv.innerHTML = data.mostTransferredIn.length ? 
+                data.mostTransferredIn.map(player => createTransferCard(player, 'in')).join('') :
+                '<p class="text-slate-600">No transfer data available</p>';
+
+            // Populate transfers out
+            transfersOutDiv.innerHTML = data.mostTransferredOut.length ?
+                data.mostTransferredOut.map(player => createTransferCard(player, 'out')).join('') :
+                '<p class="text-slate-600">No transfer data available</p>';
+        }
 
         function populateSuspensionData(data) {
             const suspendedPlayersDiv = document.getElementById('suspendedPlayers');
