@@ -111,6 +111,10 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       fdIndexData[position] = fdIndexData[position].slice(0, 5);
     }
 
+    // Get transfer history
+    const transferHistory = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/transfers/`);
+    const transfers = transferHistory.data;
+
     for (const pick of managerPicks) {
       const player = playerData.elements.find(p => p.id === pick.element);
       if (!player) continue;
@@ -269,7 +273,8 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       weeklyPoints,
       weeklyRanks,
       currentTeam,
-      fdIndexData
+      fdIndexData,
+      transfers // Add transfer history to response
     };
 
     res.json(analysis);
