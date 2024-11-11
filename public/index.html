@@ -258,13 +258,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             team: team.name,
                             photoId: player.code,
                             suspendedMatches: player.suspended_matches || 1,
-                            missedFixture: {
-                                opponent: team.short_name,
-                                isHome: true,
-                                difficulty: 3,
-                                event: data.events.find(e => e.is_current)?.id + 1,
-                                fdrColor: '#cbd5e1'
-                            }
+                            nextThreeFixtures: [] // You can add fixture data if needed
                         });
                     }
                     if (player.yellow_cards === 4) {
@@ -273,11 +267,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             team: team.name,
                             photoId: player.code,
                             yellowCards: player.yellow_cards,
-                            nextFixtures: [
-                                {opponent: team.short_name, isHome: true, difficulty: 3, event: data.events.find(e => e.is_current)?.id + 1, fdrColor: '#cbd5e1'},
-                                {opponent: team.short_name, isHome: false, difficulty: 3, event: data.events.find(e => e.is_current)?.id + 2, fdrColor: '#cbd5e1'},
-                                {opponent: team.short_name, isHome: true, difficulty: 3, event: data.events.find(e => e.is_current)?.id + 3, fdrColor: '#cbd5e1'}
-                            ]
+                            nextThreeFixtures: [] // You can add fixture data if needed
                         });
                     }
                 });
@@ -309,10 +299,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <p class="text-sm text-slate-600">${player.team}</p>
                             <p class="text-sm text-red-600 font-medium mt-1">Suspended for ${player.suspendedMatches} match${player.suspendedMatches > 1 ? 'es' : ''}</p>
                             <div class="flex space-x-2 mt-2">
-                                <div style="background-color: ${player.missedFixture.fdrColor}" 
-                                     class="text-xs rounded-md p-1 text-white">
-                                    GW${player.missedFixture.event}: ${player.missedFixture.opponent} (${player.missedFixture.isHome ? 'H' : 'A'})
-                                </div>
+                                ${player.nextThreeFixtures?.map(fixture => `
+                                    <div style="${getFDRColor(fixture.difficulty)}" 
+                                         class="text-xs rounded-md p-1 text-white">
+                                        ${fixture.opponent} (${fixture.isHome ? 'H' : 'A'})
+                                    </div>
+                                `).join('') || ''}
                             </div>
                         </div>
                     </div>
@@ -335,12 +327,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 <i class="fas fa-square text-yellow-400"></i> ${player.yellowCards} Yellow Cards
                             </p>
                             <div class="flex space-x-2 mt-2">
-                                ${player.nextFixtures.map(fixture => `
-                                    <div style="background-color: ${fixture.fdrColor}" 
+                                ${player.nextThreeFixtures?.map(fixture => `
+                                    <div style="${getFDRColor(fixture.difficulty)}" 
                                          class="text-xs rounded-md p-1 text-white">
-                                        GW${fixture.event}: ${fixture.opponent} (${fixture.isHome ? 'H' : 'A'})
+                                        ${fixture.opponent} (${fixture.isHome ? 'H' : 'A'})
                                     </div>
-                                `).join('')}
+                                `).join('') || ''}
                             </div>
                         </div>
                     </div>
