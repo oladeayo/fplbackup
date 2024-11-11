@@ -40,10 +40,26 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     
     // Fetch all required data in parallel
     const [playerDataResponse, managerEntryResponse, historyResponse, leagueResponse] = await Promise.all([
-      axios.get('https://fantasy.premierleague.com/api/bootstrap-static/'),
-      axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/`),
-      axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/history/`),
-      axios.get(`https://fantasy.premierleague.com/api/leagues-classic/${leagueId}/standings/`)
+      axios.get('https://fantasy.premierleague.com/api/bootstrap-static/', {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      }),
+      axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      }),
+      axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/history/`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      }),
+      axios.get(`https://fantasy.premierleague.com/api/leagues-classic/${leagueId}/standings/`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      })
     ]);
 
     const playerData = playerDataResponse.data;
@@ -60,10 +76,19 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       GKP: [], DEF: [], MID: [], FWD: []
     };
 
-    // Fetch fixtures for all players in parallel
-    const playerFixturesPromises = playerData.elements.map(player => {
-      return axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
-    });
+    // Fetch fixtures for all players in parallel with delay between requests
+    const playerFixturesPromises = [];
+    for (const player of playerData.elements) {
+      playerFixturesPromises.push(
+        axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        })
+      );
+      // Add delay between requests to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
 
     const playerFixturesResponses = await Promise.all(playerFixturesPromises);
 
@@ -148,7 +173,8 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       }))
     );
 
-    const currentGameweek = playerData.events.find(event => event.is_current).id;
+    const currentGameweek = playerData.events.find(event => event.is_current)?.id || 
+                          Math.max(...playerData.events.filter(e => e.finished).map(e => e.id));
     const topManagerPoints = leagueData.standings.results[0].total;
     
     // Initialize analysis data structure
@@ -174,7 +200,11 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
 
     // Get current team and fixtures
     const currentTeam = [];
-    const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${currentGameweek}/picks/`);
+    const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${currentGameweek}/picks/`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
     const managerPicks = managerPicksResponse.data.picks;
 
     // Process current team
@@ -209,10 +239,18 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       }
     }
 
-    // Fetch all gameweek data in parallel
+    // Fetch all gameweek data in parallel with delay
     const gameweekPromises = [];
     for (let gw = 1; gw <= currentGameweek; gw++) {
-      gameweekPromises.push(axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${gw}/picks/`));
+      gameweekPromises.push(
+        axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${gw}/picks/`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        })
+      );
+      // Add delay between requests
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
     const gameweekResponses = await Promise.all(gameweekPromises);
 
