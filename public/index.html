@@ -178,7 +178,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
 
         <!-- Suspension Risk Card -->
-        <div id="suspensionRisk" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover">
+        <div id="suspensionRisk" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
             <h2 class="text-2xl font-bold text-slate-800 mb-8">
                 <i class="fas fa-exclamation-triangle mr-2 text-yellow-500"></i>Suspension Risk & Banned Players
             </h2>
@@ -230,10 +230,37 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Load suspension data when page loads
         window.addEventListener('DOMContentLoaded', async () => {
             try {
-                const response = await fetch('/api/suspension-data');
-                if (!response.ok) throw new Error("Could not fetch suspension data");
+                const response = await fetch('/api/bootstrap-static');
+                if (!response.ok) throw new Error("Could not fetch bootstrap static data");
                 const data = await response.json();
-                populateSuspensionData(data);
+                
+                // Process suspension data
+                const suspendedPlayers = [];
+                const playersOn4Yellows = [];
+                
+                data.elements.forEach(player => {
+                    const team = data.teams.find(t => t.id === player.team);
+                    if (player.status === 'r' || player.status === 's') {
+                        suspendedPlayers.push({
+                            name: player.web_name,
+                            team: team.name,
+                            photoId: player.code,
+                            nextThreeFixtures: [] // You can add fixture data if needed
+                        });
+                    }
+                    if (player.yellow_cards === 4) {
+                        playersOn4Yellows.push({
+                            name: player.web_name,
+                            team: team.name,
+                            photoId: player.code,
+                            nextThreeFixtures: [] // You can add fixture data if needed
+                        });
+                    }
+                });
+
+                // Show suspension risk card and populate data
+                document.getElementById('suspensionRisk').classList.remove('hidden');
+                populateSuspensionData({ suspendedPlayers, playersOn4Yellows });
             } catch (error) {
                 console.error("Error loading suspension data:", error);
             }
@@ -257,12 +284,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <h4 class="font-semibold text-slate-800">${player.name}</h4>
                             <p class="text-sm text-slate-600">${player.team}</p>
                             <div class="flex space-x-2 mt-2">
-                                ${player.nextThreeFixtures.map(fixture => `
+                                ${player.nextThreeFixtures?.map(fixture => `
                                     <div style="${getFDRColor(fixture.difficulty)}" 
                                          class="text-xs rounded-md p-1 text-white">
                                         ${fixture.opponent} (${fixture.isHome ? 'H' : 'A'})
                                     </div>
-                                `).join('')}
+                                `).join('') || ''}
                             </div>
                         </div>
                     </div>
@@ -278,6 +305,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             yellowCardRiskDiv.innerHTML = data.playersOn4Yellows.length ?
                 data.playersOn4Yellows.map(createPlayerCard).join('') :
                 '<p class="text-slate-600">No players currently on 4 yellow cards</p>';
+        }
+
+        function getFDRColor(difficulty) {
+            const colors = {
+                1: '#22c55e',  // Green
+                2: '#84cc16',  // Light Green
+                3: '#cbd5e1',  // Gray
+                4: '#f97316',  // Orange
+                5: '#ef4444'   // Red
+            };
+            return `background-color: ${colors[difficulty] || '#cbd5e1'}`;
         }
 
         async function analyzeManager() {
@@ -423,17 +461,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     row.style.display = 'none';
                 }
             });
-        }
-
-        function getFDRColor(difficulty) {
-            const colors = {
-                1: '#22c55e',  // Green
-                2: '#84cc16',  // Light Green
-                3: '#cbd5e1',  // Gray
-                4: '#f97316',  // Orange
-                5: '#ef4444'   // Red
-            };
-            return `background-color: ${colors[difficulty] || '#cbd5e1'}`;
         }
 
         function populateFixtures(teamData) {
