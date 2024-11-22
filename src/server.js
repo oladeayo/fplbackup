@@ -39,17 +39,19 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const leagueId = 314; // Your league ID
     
     // Fetch all required data in parallel
-    const [playerDataResponse, managerEntryResponse, historyResponse, leagueResponse] = await Promise.all([
+    const [playerDataResponse, managerEntryResponse, historyResponse, leagueResponse, fixturesResponse] = await Promise.all([
       axios.get('https://fantasy.premierleague.com/api/bootstrap-static/'),
       axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/`),
       axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/history/`),
-      axios.get(`https://fantasy.premierleague.com/api/leagues-classic/${leagueId}/standings/`)
+      axios.get(`https://fantasy.premierleague.com/api/leagues-classic/${leagueId}/standings/`),
+      axios.get('https://fantasy.premierleague.com/api/fixtures/')
     ]);
 
     const playerData = playerDataResponse.data;
     const managerEntryData = managerEntryResponse.data;
     const historyData = historyResponse.data;
     const leagueData = leagueResponse.data;
+    const fixturesData = fixturesResponse.data;
 
     const currentGameweek = playerData.events.find(event => event.is_current).id;
     const topManagerPoints = leagueData.standings.results[0].total;
@@ -80,27 +82,31 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${currentGameweek}/picks/`);
     const managerPicks = managerPicksResponse.data.picks;
 
+    // Get next 5 fixtures for each team
+    const teamFixtures = {};
+    playerData.teams.forEach(team => {
+      teamFixtures[team.id] = fixturesData
+        .filter(f => (f.team_h === team.id || f.team_a === team.id) && f.event && f.event > currentGameweek)
+        .slice(0, 5)
+        .map(f => ({
+          opponent: f.team_h === team.id ? playerData.teams.find(t => t.id === f.team_a).short_name : playerData.teams.find(t => t.id === f.team_h).short_name,
+          isHome: f.team_h === team.id,
+          difficulty: f.team_h === team.id ? f.team_h_difficulty : f.team_a_difficulty
+        }));
+    });
+
     for (const pick of managerPicks) {
       const player = playerData.elements.find(p => p.id === pick.element);
       if (!player) continue;
 
       const fixturesResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
-      const nextFixtures = fixturesResponse.data.fixtures.slice(0, 5).map(fixture => {
-        const isHome = fixture.is_home;
-        const opponent = playerData.teams.find(t => t.id === (isHome ? fixture.team_a : fixture.team_h)).short_name;
-        return {
-          opponent,
-          isHome,
-          difficulty: fixture.difficulty
-        };
-      });
-
+      
       // Calculate points for last 3 gameweeks
       const last3GWPoints = fixturesResponse.data.history.slice(-3).reduce((sum, game) => sum + game.total_points, 0);
 
       currentTeam.push({
         name: player.web_name,
-        nextFixtures,
+        nextFixtures: teamFixtures[player.team],
         last3GWPoints
       });
     }
