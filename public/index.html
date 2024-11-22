@@ -286,13 +286,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let rankChart = null;
         let last3GWsChart = null;
 
-        // Load suspension data when page loads
+        // Load team fixtures and suspension data immediately when page loads
         window.addEventListener('DOMContentLoaded', async () => {
             try {
+                // Fetch bootstrap static data
                 const response = await fetch('/api/bootstrap-static');
                 if (!response.ok) throw new Error("Could not fetch bootstrap static data");
                 const data = await response.json();
-                
+
                 // Process suspension data
                 const suspendedPlayers = [];
                 const playersOn4Yellows = [];
@@ -307,7 +308,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             team: team.name,
                             photoId: player.code,
                             suspendedMatches: player.suspended_matches || 1,
-                            nextThreeFixtures: [] // You can add fixture data if needed
+                            nextThreeFixtures: [] 
                         });
                     }
                     if (player.yellow_cards === 4) {
@@ -316,7 +317,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             team: team.name,
                             photoId: player.code,
                             yellowCards: player.yellow_cards,
-                            nextThreeFixtures: [] // You can add fixture data if needed
+                            nextThreeFixtures: []
                         });
                     }
 
@@ -349,13 +350,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 populateSuspensionData({ suspendedPlayers, playersOn4Yellows });
                 populateTransferData({ mostTransferredIn: top10TransfersIn, mostTransferredOut: top10TransfersOut });
 
-                // Fetch and populate team fixtures
+                // Fetch and populate team fixtures immediately
                 const teamsFixtures = await Promise.all(data.teams.map(async team => {
-                    const fixturesResponse = await fetch(`https://fantasy.premierleague.com/api/team/${team.id}/`);
+                    const fixturesResponse = await fetch(`/api/team-fixtures/${team.id}`);
+                    if (!fixturesResponse.ok) throw new Error(`Could not fetch fixtures for team ${team.id}`);
                     const fixturesData = await fixturesResponse.json();
                     return {
                         team: team.name,
-                        fixtures: fixturesData.fixtures.slice(0, 5).map(fixture => ({
+                        fixtures: fixturesData.slice(0, 5).map(fixture => ({
                             opponent: data.teams.find(t => t.id === (fixture.is_home ? fixture.team_a : fixture.team_h)).name,
                             isHome: fixture.is_home,
                             difficulty: fixture.difficulty
