@@ -244,7 +244,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
 
         <!-- Team Fixtures Card -->
-        <div id="teamFixtures" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover">
+        <div id="teamFixtures" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8">
             <h2 class="text-2xl font-bold text-slate-800 mb-8">
                 <i class="fas fa-calendar-days mr-2"></i>All Teams' Next 5 Fixtures
             </h2>
@@ -354,21 +354,51 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 populateTransferData({ mostTransferredIn: top10TransfersIn, mostTransferredOut: top10TransfersOut });
 
                 // Fetch and populate team fixtures immediately
-                const teamsFixtures = await Promise.all(data.teams.map(async team => {
-                    const fixturesResponse = await fetch(`/api/team-fixtures/${team.id}`);
-                    if (!fixturesResponse.ok) throw new Error(`Could not fetch fixtures for team ${team.id}`);
-                    const fixturesData = await fixturesResponse.json();
+                const fixturesResponse = await fetch('/api/fixtures');
+                if (!fixturesResponse.ok) throw new Error("Could not fetch fixtures data");
+                const fixturesData = await fixturesResponse.json();
+
+                // Process fixtures data for each team
+                const teamFixtures = {};
+                data.teams.forEach(team => {
+                    teamFixtures[team.id] = [];
+                });
+
+                fixturesData.forEach(fixture => {
+                    if (fixture.event <= 5) { // Only consider next 5 gameweeks
+                        const homeTeam = data.teams.find(t => t.id === fixture.team_h);
+                        const awayTeam = data.teams.find(t => t.id === fixture.team_a);
+                        
+                        // Add fixture to home team's list
+                        teamFixtures[fixture.team_h].push({
+                            opponent: awayTeam.name,
+                            isHome: true,
+                            difficulty: fixture.team_h_difficulty,
+                            event: fixture.event
+                        });
+
+                        // Add fixture to away team's list
+                        teamFixtures[fixture.team_a].push({
+                            opponent: homeTeam.name,
+                            isHome: false,
+                            difficulty: fixture.team_a_difficulty,
+                            event: fixture.event
+                        });
+                    }
+                });
+
+                // Sort fixtures by gameweek and create display data
+                const teamsFixturesDisplay = data.teams.map(team => {
+                    const fixtures = teamFixtures[team.id]
+                        .sort((a, b) => a.event - b.event)
+                        .slice(0, 5);
                     return {
                         team: team.name,
-                        fixtures: fixturesData.slice(0, 5).map(fixture => ({
-                            opponent: data.teams.find(t => t.id === (fixture.is_home ? fixture.team_a : fixture.team_h)).name,
-                            isHome: fixture.is_home,
-                            difficulty: fixture.difficulty
-                        }))
+                        fixtures: fixtures
                     };
-                }));
+                });
 
-                populateTeamFixtures(teamsFixtures);
+                populateTeamFixtures(teamsFixturesDisplay);
             } catch (error) {
                 console.error("Error loading data:", error);
             }
