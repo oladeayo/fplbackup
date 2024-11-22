@@ -80,41 +80,6 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
     const managerPicksResponse = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/event/${currentGameweek}/picks/`);
     const managerPicks = managerPicksResponse.data.picks;
 
-    // Process FD Index data
-    const fdIndexData = {
-      GKP: [],
-      DEF: [], 
-      MID: [],
-      FWD: []
-    };
-
-    // Calculate FD Index for each player
-    for (const player of playerData.elements) {
-      const position = ["GKP", "DEF", "MID", "FWD"][player.element_type - 1];
-      const form = parseFloat(player.form) || 0;
-      const fixturesDifficulty = player.difficulty || 3;
-      const fdIndex = form / fixturesDifficulty;
-
-      fdIndexData[position].push({
-        name: player.web_name,
-        team: playerData.teams[player.team - 1].name,
-        photoId: player.code,
-        form,
-        fixturesDifficulty,
-        fdIndex
-      });
-    }
-
-    // Sort FD Index data and get top 5 for each position
-    for (const position in fdIndexData) {
-      fdIndexData[position].sort((a, b) => b.fdIndex - a.fdIndex);
-      fdIndexData[position] = fdIndexData[position].slice(0, 5);
-    }
-
-    // Get transfer history
-    const transferHistory = await axios.get(`https://fantasy.premierleague.com/api/entry/${managerId}/transfers/`);
-    const transfers = transferHistory.data;
-
     for (const pick of managerPicks) {
       const player = playerData.elements.find(p => p.id === pick.element);
       if (!player) continue;
@@ -272,9 +237,7 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
       })),
       weeklyPoints,
       weeklyRanks,
-      currentTeam,
-      fdIndexData,
-      transfers // Add transfer history to response
+      currentTeam
     };
 
     res.json(analysis);
