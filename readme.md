@@ -1,6 +1,6 @@
 # Awesome Project Name 🚀
 
-![Project Logo](vector.png)
+![Project Logo](Vector.png)
 
 ## Overview
 This is an innovative solution designed to streamline your workflow and enhance productivity. Our project combines cutting-edge technology with user-friendly interfaces to deliver an exceptional experience.
