@@ -32,49 +32,7 @@ app.get('/api/bootstrap-static', async (req, res) => {
   }
 });
 
-// Endpoint to fetch transfer suggestions
-app.get('/api/transfer-suggestions', async (req, res) => {
-  try {
-    // Fetch bootstrap static data
-    const bootstrapResponse = await axios.get('https://fantasy.premierleague.com/api/bootstrap-static/');
-    const { elements, element_types } = bootstrapResponse.data;
 
-    // Get current gameweek
-    const currentGW = bootstrapResponse.data.events.find(event => event.is_current).id;
-
-    // Process each player
-    const processedPlayers = await Promise.all(elements.map(async (player) => {
-      try {
-        // Fetch player's detailed stats
-        const fixturesResponse = await axios.get(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
-        const fixtures = fixturesResponse.data.fixtures.slice(0, 4); // Next 4 fixtures
-        
-        // Calculate average FDR for next 4 games
-        const fdr_next_4 = fixtures.reduce((sum, fix) => sum + fix.difficulty, 0);
-        
-        // Calculate FD index (FDR sum / form)
-        const fd_index = player.form > 0 ? fdr_next_4 / parseFloat(player.form) : Infinity;
-
-        return {
-          ...player,
-          fdr_next_4,
-          fd_index
-        };
-      } catch (error) {
-        console.error(`Error processing player ${player.id}:`, error);
-        return player;
-      }
-    }));
-
-    res.json({
-      elements: processedPlayers,
-      element_types
-    });
-  } catch (error) {
-    console.error('Error fetching transfer suggestions:', error);
-    res.status(500).json({ error: 'Failed to fetch transfer suggestions' });
-  }
-});
 
 // Analyze manager endpoint
 app.get('/api/analyze-manager/:managerId', async (req, res) => {

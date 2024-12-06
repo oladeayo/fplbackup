@@ -182,51 +182,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
         </div>
 
-        <!-- Transfer Suggestions Card -->
-        <div id="transferSuggestions" class="max-w-7xl mx-auto mt-10 glass-effect rounded-3xl shadow-xl p-8 card-hover hidden">
-            <h2 class="text-2xl font-bold text-slate-800 mb-8">
-                <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>Transfer Suggestions
-            </h2>
-            <div class="space-y-8">
-                <!-- Goalkeepers -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-amber-600">
-                        <i class="fas fa-hands mr-2"></i>Goalkeepers
-                    </h3>
-                    <div id="suggestedGKP" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-                <!-- Defenders -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-blue-600">
-                        <i class="fas fa-shield mr-2"></i>Defenders
-                    </h3>
-                    <div id="suggestedDEF" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-                <!-- Midfielders -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-emerald-600">
-                        <i class="fas fa-running mr-2"></i>Midfielders
-                    </h3>
-                    <div id="suggestedMID" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-                <!-- Forwards -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4 text-rose-600">
-                        <i class="fas fa-futbol mr-2"></i>Forwards
-                    </h3>
-                    <div id="suggestedFWD" class="scroll-container">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Buy Me a Coffee Button -->
         <div class="flex justify-center mt-16">
             <a href="https://www.buymeacoffee.com/oladeeayo" 
@@ -320,53 +275,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         });
 
-        function populateTransferSuggestions(data) {
-            const positions = ['GKP', 'DEF', 'MID', 'FWD'];
-            const fdrColors = {
-                1: '#22c55e',  // Green
-                2: '#84cc16',  // Light Green
-                3: '#cbd5e1',  // Gray
-                4: '#f97316',  // Orange
-                5: '#ef4444'   // Red
-            };
 
-            positions.forEach(pos => {
-                const container = document.getElementById(`suggested${pos}`);
-                const players = data.elements
-                    .filter(p => data.element_types[p.element_type - 1].singular_name_short === pos)
-                    .sort((a, b) => a.fd_index - b.fd_index) // Sort by fd_index ascending (lower is better)
-                    .slice(0, 5); // Get top 5 players for each position
-
-                container.innerHTML = players.map(player => `
-                    <div class="player-card bg-white/50 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300">
-                        <div class="flex items-center space-x-4">
-                            <img 
-                                src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.code}.png" 
-                                alt="${player.web_name}"
-                                class="w-16 h-20 object-cover rounded-lg"
-                                onerror="this.src='https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png'"
-                            >
-                            <div>
-                                <h4 class="font-semibold text-slate-800">${player.web_name}</h4>
-                                <p class="text-sm text-slate-600">${data.teams[player.team - 1].name}</p>
-                                <p class="text-sm text-slate-600">Total Points: ${player.total_points}</p>
-                                <p class="text-sm text-slate-600">Form: ${player.form}</p>
-                                <p class="text-sm text-slate-600">FDR Next 4: ${player.fdr_next_4}</p>
-                                <p class="text-sm text-slate-600">FD Index: ${player.fd_index.toFixed(2)}</p>
-                                <div class="flex space-x-2 mt-2">
-                                    ${player.fixtures?.slice(0, 4).map(fix => `
-                                        <div style="background-color: ${fdrColors[fix.difficulty]}" 
-                                             class="text-xs rounded-md p-1 text-white">
-                                            ${fix.opponent_short} (${fix.is_home ? 'H' : 'A'})
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-            });
-        }
 
         function populateTransferData(data) {
             const transfersInDiv = document.getElementById('mostTransferredIn');
