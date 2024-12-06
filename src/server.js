@@ -95,13 +95,17 @@ app.get('/api/analyze-manager/:managerId', async (req, res) => {
         };
       });
 
-      // Calculate points for last 3 gameweeks
-      const last3GWPoints = fixturesResponse.data.history.slice(-3).reduce((sum, game) => sum + game.total_points, 0);
+      // Calculate points and matches played for last 3 gameweeks
+      const last3GWHistory = fixturesResponse.data.history.slice(-3);
+      const last3GWPoints = last3GWHistory.reduce((sum, game) => sum + game.total_points, 0);
+      const matchesPlayed = last3GWHistory.length;
 
       currentTeam.push({
         name: player.web_name,
         nextFixtures,
-        last3GWPoints
+        last3GWPoints,
+        matchesPlayed,
+        inactive: matchesPlayed <= 2
       });
     }
 
