@@ -334,8 +334,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const container = document.getElementById(`suggested${pos}`);
                 const players = data.elements
                     .filter(p => data.element_types[p.element_type - 1].singular_name_short === pos)
-                    .sort((a, b) => b.form / b.fdr_next_4 - a.form / a.fdr_next_4)
-                    .slice(0, pos === 'GKP' ? 4 : pos === 'FWD' ? 5 : 10);
+                    .sort((a, b) => a.fd_index - b.fd_index) // Sort by fd_index ascending (lower is better)
+                    .slice(0, 5); // Get top 5 players for each position
 
                 container.innerHTML = players.map(player => `
                     <div class="player-card bg-white/50 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300">
@@ -351,9 +351,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 <p class="text-sm text-slate-600">${data.teams[player.team - 1].name}</p>
                                 <p class="text-sm text-slate-600">Total Points: ${player.total_points}</p>
                                 <p class="text-sm text-slate-600">Form: ${player.form}</p>
-                                <p class="text-sm text-slate-600">FD Index: ${(player.form / player.fdr_next_4).toFixed(2)}</p>
+                                <p class="text-sm text-slate-600">FDR Next 4: ${player.fdr_next_4}</p>
+                                <p class="text-sm text-slate-600">FD Index: ${player.fd_index.toFixed(2)}</p>
                                 <div class="flex space-x-2 mt-2">
-                                    ${player.fixtures.slice(0, 4).map(fix => `
+                                    ${player.fixtures?.slice(0, 4).map(fix => `
                                         <div style="background-color: ${fdrColors[fix.difficulty]}" 
                                              class="text-xs rounded-md p-1 text-white">
                                             ${fix.opponent_short} (${fix.is_home ? 'H' : 'A'})
