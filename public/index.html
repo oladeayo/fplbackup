@@ -290,18 +290,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 
                 // Fetch and populate team fixtures
                 const fixturesResponse = await fetch('https://fantasy.premierleague.com/api/fixtures/');
+                if (!fixturesResponse.ok) throw new Error("Could not fetch fixtures data");
                 const fixturesData = await fixturesResponse.json();
-                populateTeamFixtures(data.teams, fixturesData, data.elements);
+
+                // Get top performers data
+                const topPerformersResponse = await fetch('/api/top-performers');
+                if (!topPerformersResponse.ok) throw new Error("Could not fetch top performers data");
+                const topPerformersData = await topPerformersResponse.json();
+
+                // Combine fixtures and top performers data
+                populateTeamFixtures(data.teams, fixturesData, topPerformersData);
+                
+                // Show the team fixtures card
+                document.getElementById('teamFixtures').classList.remove('hidden');
             } catch (error) {
                 console.error("Error loading data:", error);
             }
         });
 
-        async function populateTeamFixtures(teams, fixtures, players) {
+        async function populateTeamFixtures(teams, fixtures, topPerformers) {
             const currentGameweek = fixtures.find(f => f.finished === false)?.event || 1;
             const teamFixturesBody = document.getElementById('teamFixturesBody');
             
-            const teamRows = await Promise.all(teams.map(async team => {
+            const teamRows = teams.map(team => {
                 // Get next 5 fixtures
                 const nextFixtures = fixtures
                     .filter(f => (f.team_h === team.id || f.team_a === team.id) && f.event >= currentGameweek)
@@ -316,12 +327,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         };
                     });
 
-                // Get top 3 performers
-                const teamPlayers = players.filter(p => p.team === team.id);
-                const topPerformers = teamPlayers
-                    .sort((a, b) => b.points_per_game - a.points_per_game)
+                // Get top 3 performers for the team
+                const teamTopPerformers = topPerformers[team.id] || [];
+                const topPerformersString = teamTopPerformers
                     .slice(0, 3)
-                    .map(p => `${p.web_name} (${p.points_per_game} PPG)`);
+                    .map(p => `${p.name} (${p.points} pts)`)
+                    .join(', ');
 
                 return `
                     <tr class="border-t hover:bg-blue-50/50 transition-colors duration-200">
@@ -333,10 +344,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 </div>
                             </td>
                         `).join('')}
-                        <td class="px-6 py-4 text-sm text-slate-600">${topPerformers.join(', ')}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600">${topPerformersString || 'No data available'}</td>
                     </tr>
                 `;
-            }));
+            });
 
             teamFixturesBody.innerHTML = teamRows.join('');
         }
