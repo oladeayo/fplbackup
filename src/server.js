@@ -26,7 +26,64 @@ app.get('/api/health', (req, res) => {
 app.get('/api/bootstrap-static', async (req, res) => {
   try {
     const response = await axios.get('https://fantasy.premierleague.com/api/bootstrap-static/');
-    res.json(response.data);
+    
+    // Process suspension data
+    const suspendedPlayers = [];
+    const playersOn4Yellows = [];
+    const mostTransferredIn = [];
+    const mostTransferredOut = [];
+
+    response.data.elements.forEach(player => {
+      const team = response.data.teams.find(t => t.id === player.team);
+      
+      if (player.status === 'r' || player.status === 's') {
+        suspendedPlayers.push({
+          name: player.web_name,
+          team: team.name,
+          photoId: player.code,
+          suspendedMatches: player.suspended_matches || 1,
+          nextThreeFixtures: [] // Will be populated if needed
+        });
+      }
+
+      if (player.yellow_cards === 4) {
+        playersOn4Yellows.push({
+          name: player.web_name,
+          team: team.name,
+          photoId: player.code,
+          yellowCards: player.yellow_cards,
+          nextThreeFixtures: [] // Will be populated if needed
+        });
+      }
+
+      mostTransferredIn.push({
+        name: player.web_name,
+        team: team.name,
+        photoId: player.code,
+        transfers: player.transfers_in_event
+      });
+
+      mostTransferredOut.push({
+        name: player.web_name,
+        team: team.name,
+        photoId: player.code,
+        transfers: player.transfers_out_event
+      });
+    });
+
+    // Sort and get top 10 transfers
+    mostTransferredIn.sort((a, b) => b.transfers - a.transfers);
+    mostTransferredOut.sort((a, b) => b.transfers - a.transfers);
+
+    const enrichedData = {
+      ...response.data,
+      suspendedPlayers,
+      playersOn4Yellows,
+      mostTransferredIn: mostTransferredIn.slice(0, 10),
+      mostTransferredOut: mostTransferredOut.slice(0, 10)
+    };
+
+    res.json(enrichedData);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch bootstrap static data' });
   }
